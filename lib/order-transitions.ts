@@ -71,17 +71,13 @@ export function canRoleTransitionOrder(
     };
   }
 
-  // Validate state machine transition first
+  // Validate streamlined 2-step workflow (Confirm -> Deliver)
   const validTargetsByState: Record<string, string[]> = {
     placed: ["confirmed", "cancelled"],
-    confirmed: ["preparing", "cancelled"],
-    preparing: ["ready", "cancelled"],
-    ready:
-      orderType === "dine_in"
-        ? ["served", "completed", "cancelled"]
-        : ["out_for_delivery", "cancelled"],
-    out_for_delivery:
-      orderType === "delivery" ? ["delivered", "completed", "cancelled"] : [],
+    confirmed: ["delivered", "completed", "cancelled"],
+    preparing: ["delivered", "completed", "cancelled"],
+    ready: ["delivered", "completed", "cancelled"],
+    out_for_delivery: ["delivered", "completed", "cancelled"],
   };
 
   const allowedTargets = validTargetsByState[currentStatus] ?? [];
@@ -99,14 +95,17 @@ export function canRoleTransitionOrder(
 
   if (role === "kitchen") {
     const isKitchenMove =
-      (currentStatus === "confirmed" && targetStatus === "preparing") ||
-      (currentStatus === "preparing" && targetStatus === "ready");
+      (currentStatus === "placed" && targetStatus === "confirmed") ||
+      ((currentStatus === "confirmed" ||
+        currentStatus === "preparing" ||
+        currentStatus === "ready") &&
+        (targetStatus === "delivered" || targetStatus === "completed"));
 
     if (!isKitchenMove) {
       return {
         allowed: false,
         reason:
-          "Kitchen staff can only move orders from confirmed to preparing and ready.",
+          "Kitchen staff can only confirm new orders or mark confirmed orders delivered.",
       };
     }
     return { allowed: true };
@@ -121,15 +120,17 @@ export function canRoleTransitionOrder(
     }
 
     const isDeliveryMove =
-      (currentStatus === "ready" && targetStatus === "out_for_delivery") ||
-      (currentStatus === "out_for_delivery" &&
-        (targetStatus === "delivered" || targetStatus === "completed"));
+      (currentStatus === "confirmed" ||
+        currentStatus === "preparing" ||
+        currentStatus === "ready" ||
+        currentStatus === "out_for_delivery") &&
+      (targetStatus === "delivered" || targetStatus === "completed");
 
     if (!isDeliveryMove) {
       return {
         allowed: false,
         reason:
-          "Delivery staff can only act on delivery orders from ready onward.",
+          "Delivery staff can only mark confirmed orders as delivered.",
       };
     }
     return { allowed: true };
@@ -147,36 +148,16 @@ export function getAvailableOrderActions(
 
   if (currentStatus === "placed") {
     candidates.push(
-      { targetStatus: "confirmed", label: "Confirm", variant: "default" },
+      { targetStatus: "confirmed", label: "Confirm order", variant: "default" },
       { targetStatus: "cancelled", label: "Reject", variant: "destructive" }
     );
-  } else if (currentStatus === "confirmed") {
-    candidates.push({
-      targetStatus: "preparing",
-      label: "Start preparing",
-      variant: "default",
-    });
-  } else if (currentStatus === "preparing") {
-    candidates.push({
-      targetStatus: "ready",
-      label: "Mark ready",
-      variant: "default",
-    });
-  } else if (currentStatus === "ready") {
-    if (orderType === "dine_in") {
-      candidates.push({
-        targetStatus: "served",
-        label: "Mark served",
-        variant: "default",
-      });
-    } else {
-      candidates.push({
-        targetStatus: "out_for_delivery",
-        label: "Out for delivery",
-        variant: "default",
-      });
-    }
-  } else if (currentStatus === "out_for_delivery") {
+  } else if (
+    currentStatus === "confirmed" ||
+    currentStatus === "accepted" ||
+    currentStatus === "preparing" ||
+    currentStatus === "ready" ||
+    currentStatus === "out_for_delivery"
+  ) {
     candidates.push({
       targetStatus: "delivered",
       label: "Mark delivered",

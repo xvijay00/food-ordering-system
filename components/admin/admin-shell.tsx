@@ -8,15 +8,14 @@ import {
   BarChart3,
   ClipboardList,
   ExternalLink,
-  Flame,
   LogOut,
-  QrCode,
   Settings,
   Users,
   UtensilsCrossed,
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,12 +41,6 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     href: "/admin/menu",
     label: "Menu",
     icon: UtensilsCrossed,
-    roles: ["admin"],
-  },
-  {
-    href: "/admin/tables",
-    label: "Tables",
-    icon: QrCode,
     roles: ["admin"],
   },
   {
@@ -111,11 +104,9 @@ export function AdminShell({
           <div className="px-1">
             <Link
               href="/admin"
-              className="inline-flex min-h-10 items-center gap-2 font-heading text-base font-bold tracking-tight"
+              className="inline-flex min-h-10 items-center gap-2.5 font-heading text-base font-bold tracking-tight"
             >
-              <span className="flex size-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                <Flame className="size-4" aria-hidden="true" />
-              </span>
+              <BrandLogo size={32} decorative className="size-8 rounded-lg" />
               <span className="truncate">{RESTAURANT_CONFIG.name}</span>
             </Link>
           </div>
@@ -182,9 +173,7 @@ export function AdminShell({
       {/* Mobile Top Header */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-border/80 bg-background/90 px-4 backdrop-blur-md md:hidden print:hidden">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
-            <Flame className="size-3.5" aria-hidden="true" />
-          </span>
+          <BrandLogo size={28} decorative className="size-7 rounded-md" />
           <span className="truncate text-sm font-semibold">{staff.name}</span>
           <Badge variant="secondary" className="shrink-0 text-[11px] capitalize">
             {staff.role}

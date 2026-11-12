@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { AlertCircle, Eye, EyeOff, Flame, Loader2 } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -94,9 +95,9 @@ export function AdminLoginForm() {
       <div className="mx-auto flex w-full max-w-md items-center justify-between">
         <Link
           href="/"
-          className="inline-flex min-h-11 items-center gap-2 font-heading text-sm font-semibold"
+          className="inline-flex min-h-11 items-center gap-2.5 font-heading text-sm font-semibold"
         >
-          <Flame className="size-4 text-amber-500" aria-hidden="true" />
+          <BrandLogo size={32} priority decorative className="size-8 rounded-lg" />
           <span>{RESTAURANT_CONFIG.name}</span>
         </Link>
         <ThemeToggle />

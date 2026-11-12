@@ -239,38 +239,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const deliveryFee =
-      input.orderType === "delivery" ? deliveryFeeSetting : 0;
+    const deliveryFee = deliveryFeeSetting;
     const total = Number((subtotal + deliveryFee).toFixed(2));
 
-    // 5. For dine-in, verify table exists and is active
-    let tableId: string | null = null;
-    if (input.orderType === "dine_in") {
-      const { data: tableRow, error: tableError } = await admin
-        .from("restaurant_tables")
-        .select("id, table_number, is_active")
-        .eq("table_number", input.tableNo!)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (tableError) {
-        return NextResponse.json(
-          { error: "Could not verify table number. Please try again." },
-          { status: 500 }
-        );
-      }
-
-      if (!tableRow) {
-        return NextResponse.json(
-          { error: `Table ${input.tableNo} is not active or does not exist.` },
-          { status: 400 }
-        );
-      }
-
-      tableId = tableRow.id;
-    }
-
-    // 7. Rate limit: max 5 orders per IP per 10 minutes
+    // 5. Rate limit: max 5 orders per IP per 10 minutes
     const clientIp = getClientIp(request);
     if (!checkAndRecordRateLimit(clientIp)) {
       return NextResponse.json(
@@ -282,25 +254,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const resolvedName =
-      input.customerName?.trim() ||
-      (input.orderType === "dine_in"
-        ? `Guest (Table ${input.tableNo})`
-        : "Guest");
+    const resolvedName = input.customerName?.trim() || "Guest";
     const resolvedPhone = input.customerPhone?.trim() || "N/A";
 
     // 6. Insert into orders, order_items, and order_status_history (rollback on error)
     const { data: createdOrder, error: orderInsertError } = await admin
       .from("orders")
       .insert({
-        order_type: input.orderType,
-        table_id: tableId,
+        order_type: "delivery",
+        table_id: null,
         customer_name: resolvedName,
         customer_phone: resolvedPhone,
-        delivery_address:
-          input.orderType === "delivery"
-            ? input.deliveryAddress?.trim() || null
-            : null,
+        delivery_address: input.deliveryAddress?.trim() || null,
         status: "placed",
         payment_method: input.paymentMethod,
         payment_status: "pending",
@@ -353,10 +318,7 @@ export async function POST(request: Request) {
     // Best-effort staff Web Push notification
     void sendStaffOrderPush({
       title: `New Order #${createdOrder.order_no}`,
-      body:
-        input.orderType === "dine_in"
-          ? `Dine-in Table ${input.tableNo} · ₹${total}`
-          : `Delivery order · ₹${total}`,
+      body: `Delivery order · ₹${total}`,
       url: "/admin/orders",
     });
 

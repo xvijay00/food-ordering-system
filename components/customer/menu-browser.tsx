@@ -8,8 +8,6 @@ import {
   Bike,
   Search,
   ShoppingBag,
-  Store,
-  UtensilsCrossed,
   X,
 } from "lucide-react";
 
@@ -43,8 +41,6 @@ export function MenuBrowser({
   fetchError = null,
 }: MenuBrowserProps) {
   const hydrated = useHydrated();
-  const orderType = useCartStore((state) => state.orderType);
-  const tableNo = useCartStore((state) => state.tableNo);
   const items = useCartStore((state) => state.items);
 
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -113,55 +109,28 @@ export function MenuBrowser({
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6">
-      {/* Order Mode Bar */}
+      {/* Delivery Banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card/70 px-4 py-3">
         <div className="flex items-center gap-2.5 text-sm">
-          {hydrated && orderType === "dine_in" ? (
-            <>
-              <span className="flex size-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                <UtensilsCrossed className="size-4" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="font-semibold">
-                  Dine-in{tableNo !== null ? ` · Table ${tableNo}` : ""}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Served straight to your table
-                </p>
-              </div>
-            </>
-          ) : hydrated && orderType === "delivery" ? (
-            <>
-              <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                <Bike className="size-4" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="font-semibold">Delivery</p>
-                <p className="text-xs text-muted-foreground">
-                  Packed fresh and delivered to your address
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <span className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                <Store className="size-4" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="font-semibold">Menu</p>
-                <p className="text-xs text-muted-foreground">
-                  Choose Dine-in or Delivery on the home screen
-                </p>
-              </div>
-            </>
-          )}
+          <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+            <Bike className="size-4" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="font-semibold">Delivery</p>
+            <p className="text-xs text-muted-foreground">
+              Packed fresh and delivered to your address
+            </p>
+          </div>
         </div>
 
-        <Button asChild variant="outline" size="sm" className="min-h-9">
-          <Link href="/">
-            {hydrated && orderType ? "Change mode" : "Choose mode"}
-          </Link>
-        </Button>
+        {itemCount > 0 && (
+          <Button asChild variant="outline" size="sm" className="min-h-9 gap-1.5">
+            <Link href="/cart">
+              <ShoppingBag className="size-3.5" aria-hidden="true" />
+              <span>View Cart ({itemCount})</span>
+            </Link>
+          </Button>
+        )}
       </div>
 
       {!shopOpen && (

@@ -105,39 +105,28 @@ const DELIVERY_STEPS: StepDefinition[] = [
   {
     key: "confirmed",
     label: "Confirmed",
-    description: "Kitchen has accepted your order.",
+    description: "Your order has been confirmed.",
     icon: CheckCircle2,
-  },
-  {
-    key: "preparing",
-    label: "Preparing",
-    description: "Your food is being freshly prepared.",
-    icon: ChefHat,
-  },
-  {
-    key: "ready",
-    label: "Ready",
-    description: "Packed fresh and awaiting rider pickup.",
-    icon: PackageCheck,
-  },
-  {
-    key: "out_for_delivery",
-    label: "Out for delivery",
-    description: "On the way to your doorstep.",
-    icon: Bike,
   },
   {
     key: "completed",
     label: "Delivered",
     description: "Order delivered. Enjoy your meal!",
-    icon: CheckCircle2,
+    icon: Bike,
   },
 ];
 
 const POLL_INTERVAL_MS = 8000;
 
 function normalizeStatus(status: string): string {
-  if (status === "accepted") return "confirmed";
+  if (
+    status === "accepted" ||
+    status === "preparing" ||
+    status === "ready" ||
+    status === "out_for_delivery"
+  ) {
+    return "confirmed";
+  }
   if (status === "delivered" || status === "served") return "completed";
   return status;
 }
@@ -159,7 +148,6 @@ function formatStatusLabel(status: string, orderType?: OrderType): string {
 export function OrderTracker({ token }: { token: string }) {
   const router = useRouter();
   const setOrderType = useCartStore((state) => state.setOrderType);
-  const setDineInTable = useCartStore((state) => state.setDineInTable);
 
   const [order, setOrder] = React.useState<PublicOrderSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -257,11 +245,7 @@ export function OrderTracker({ token }: { token: string }) {
   };
 
   const handleOrderAgain = () => {
-    if (order?.order_type === "dine_in" && order.restaurant_tables?.table_number) {
-      setDineInTable(order.restaurant_tables.table_number);
-    } else if (order?.order_type === "delivery") {
-      setOrderType("delivery");
-    }
+    setOrderType("delivery");
     router.push("/menu");
   };
 

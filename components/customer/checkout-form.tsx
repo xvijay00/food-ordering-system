@@ -12,25 +12,15 @@ import {
   Bike,
   Loader2,
   ShoppingBag,
-  Store,
-  UtensilsCrossed,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/format";
-import { createClient } from "@/lib/supabase-browser";
 import { useHydrated } from "@/lib/use-hydrated";
 import {
   checkoutFormSchema,
@@ -41,7 +31,7 @@ import {
   calculateCartTotal,
   useCartStore,
 } from "@/store/cart";
-import type { AppSettings, RestaurantTable } from "@/types/database";
+import type { AppSettings } from "@/types/database";
 
 const MY_ORDERS_STORAGE_KEY = "my_orders";
 
@@ -49,12 +39,9 @@ export function CheckoutForm() {
   const router = useRouter();
   const hydrated = useHydrated();
 
-  const orderType = useCartStore((state) => state.orderType);
-  const tableNo = useCartStore((state) => state.tableNo);
   const storedNotes = useCartStore((state) => state.notes);
   const items = useCartStore((state) => state.items);
   const setOrderType = useCartStore((state) => state.setOrderType);
-  const setDineInTable = useCartStore((state) => state.setDineInTable);
   const clear = useCartStore((state) => state.clear);
 
   const [settings, setSettings] = React.useState<AppSettings>({
@@ -63,8 +50,6 @@ export function CheckoutForm() {
     shop_open: true,
   });
   const [loadingSettings, setLoadingSettings] = React.useState(true);
-  const [tables, setTables] = React.useState<RestaurantTable[]>([]);
-  const [loadingTables, setLoadingTables] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   const form = useForm<CheckoutFormValues>({
@@ -85,32 +70,24 @@ export function CheckoutForm() {
     register,
     handleSubmit,
     setValue,
-    clearErrors,
-    watch,
     formState: { errors, isSubmitting },
   } = form;
 
-  const watchedOrderType = watch("orderType");
-  const watchedTableNo = watch("tableNo");
-
-  // Sync persisted store orderType, tableNo, and notes on hydration
+  // Enforce delivery mode and sync persisted notes on hydration
   React.useEffect(() => {
     if (!hydrated) return;
 
-    const resolvedMode = orderType ?? "delivery";
-    setValue("orderType", resolvedMode);
-    setValue(
-      "paymentMethod",
-      resolvedMode === "dine_in" ? "counter" : "cod"
-    );
-    setValue("tableNo", resolvedMode === "dine_in" ? (tableNo ?? null) : null);
+    setOrderType("delivery");
+    setValue("orderType", "delivery");
+    setValue("paymentMethod", "cod");
+    setValue("tableNo", null);
 
     if (storedNotes) {
       setValue("notes", storedNotes);
     }
-  }, [hydrated, orderType, setValue, storedNotes, tableNo]);
+  }, [hydrated, setOrderType, setValue, storedNotes]);
 
-  // Fetch public shop settings and active tables
+  // Fetch public shop settings
   React.useEffect(() => {
     let active = true;
 
@@ -125,24 +102,6 @@ export function CheckoutForm() {
         // Fallback to default settings if unreachable
       } finally {
         if (active) setLoadingSettings(false);
-      }
-
-      setLoadingTables(true);
-      try {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("restaurant_tables")
-          .select("id, table_number, is_active")
-          .eq("is_active", true)
-          .order("table_number", { ascending: true });
-
-        if (active && data) {
-          setTables(data);
-        }
-      } catch {
-        // Ignore if Supabase browser client isn't configured yet
-      } finally {
-        if (active) setLoadingTables(false);
       }
     }
 
@@ -186,38 +145,15 @@ export function CheckoutForm() {
   }
 
   const subtotal = calculateCartSubtotal(items);
-  const appliedDeliveryFee =
-    watchedOrderType === "delivery" ? settings.delivery_fee : 0;
+  const appliedDeliveryFee = settings.delivery_fee;
   const total = calculateCartTotal(
     items,
-    watchedOrderType,
+    "delivery",
     settings.delivery_fee
   );
-  const minOrderNotMet =
-    watchedOrderType === "delivery" && subtotal < settings.min_order;
+  const minOrderNotMet = subtotal < settings.min_order;
   const orderingDisabled =
     isSubmitting || !settings.shop_open || minOrderNotMet;
-
-  const handleModeSwitch = (nextMode: "dine_in" | "delivery") => {
-    clearErrors();
-    setValue("orderType", nextMode, { shouldValidate: true });
-    setValue("paymentMethod", nextMode === "dine_in" ? "counter" : "cod", {
-      shouldValidate: true,
-    });
-
-    if (nextMode === "dine_in") {
-      const nextTable = watchedTableNo ?? tableNo ?? tables[0]?.table_number ?? null;
-      setValue("tableNo", nextTable, { shouldValidate: true });
-      if (nextTable) {
-        setDineInTable(nextTable);
-      } else {
-        setOrderType("dine_in");
-      }
-    } else {
-      setValue("tableNo", null, { shouldValidate: true });
-      setOrderType("delivery");
-    }
-  };
 
   const onSubmit = async (values: CheckoutFormValues) => {
     setSubmitError(null);
@@ -227,7 +163,7 @@ export function CheckoutForm() {
       return;
     }
 
-    if (values.orderType === "delivery" && subtotal < settings.min_order) {
+    if (subtotal < settings.min_order) {
       setSubmitError(
         `Minimum order amount for delivery is ${formatPrice(settings.min_order)}.`
       );
@@ -236,16 +172,13 @@ export function CheckoutForm() {
 
     try {
       const payloadBody = {
-        orderType: values.orderType,
-        tableNo: values.orderType === "dine_in" ? values.tableNo ?? null : null,
+        orderType: "delivery" as const,
+        tableNo: null,
         customerName: values.customerName?.trim() || "",
         customerPhone: values.customerPhone?.trim() || "",
-        deliveryAddress:
-          values.orderType === "delivery"
-            ? values.deliveryAddress?.trim() || ""
-            : "",
+        deliveryAddress: values.deliveryAddress?.trim() || "",
         notes: values.notes?.trim() || "",
-        paymentMethod: values.paymentMethod,
+        paymentMethod: "cod" as const,
         items: items.map((item) => {
           const addonIds = item.addons
             .map((addon) => addon.id)
@@ -361,91 +294,11 @@ export function CheckoutForm() {
                 noValidate
                 className="space-y-5"
               >
-                {/* Order Type */}
-                <fieldset className="space-y-2">
-                  <legend className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                    Order Type
-                  </legend>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <Button
-                      type="button"
-                      variant={
-                        watchedOrderType === "dine_in" ? "default" : "outline"
-                      }
-                      onClick={() => handleModeSwitch("dine_in")}
-                      className="min-h-11 gap-2 rounded-xl"
-                    >
-                      <UtensilsCrossed className="size-4" aria-hidden="true" />
-                      <span>Dine-in</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={
-                        watchedOrderType === "delivery" ? "default" : "outline"
-                      }
-                      onClick={() => handleModeSwitch("delivery")}
-                      className="min-h-11 gap-2 rounded-xl"
-                    >
-                      <Bike className="size-4" aria-hidden="true" />
-                      <span>Delivery</span>
-                    </Button>
-                  </div>
-                </fieldset>
-
-                {/* Dine-in Table Select */}
-                {watchedOrderType === "dine_in" && (
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="checkout-table"
-                      className="block text-sm font-medium"
-                    >
-                      Table Number <span aria-hidden="true">*</span>
-                    </label>
-                    <Select
-                      value={watchedTableNo ? String(watchedTableNo) : ""}
-                      onValueChange={(value) => {
-                        const num = Number.parseInt(value, 10);
-                        setValue("tableNo", num, { shouldValidate: true });
-                        setDineInTable(num);
-                      }}
-                    >
-                      <SelectTrigger
-                        id="checkout-table"
-                        aria-invalid={Boolean(errors.tableNo)}
-                        aria-describedby={
-                          errors.tableNo ? "checkout-table-error" : undefined
-                        }
-                        className="w-full rounded-xl data-[size=default]:h-11"
-                      >
-                        <SelectValue
-                          placeholder={
-                            loadingTables
-                              ? "Loading tables..."
-                              : "Select table number"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tables.map((t) => (
-                          <SelectItem
-                            key={t.id}
-                            value={String(t.table_number)}
-                          >
-                            Table {t.table_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.tableNo && (
-                      <p
-                        id="checkout-table-error"
-                        className="text-xs font-medium text-destructive"
-                      >
-                        {errors.tableNo.message}
-                      </p>
-                    )}
-                  </div>
-                )}
+                {/* Delivery Mode Badge */}
+                <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-sm font-medium text-emerald-900 dark:text-emerald-200">
+                  <Bike className="size-4 shrink-0" aria-hidden="true" />
+                  <span>Delivery to your location</span>
+                </div>
 
                 {/* Customer Name */}
                 <div className="space-y-1.5">
@@ -453,21 +306,14 @@ export function CheckoutForm() {
                     htmlFor="checkout-name"
                     className="block text-sm font-medium"
                   >
-                    Full Name{" "}
-                    {watchedOrderType === "delivery" ? (
-                      <span aria-hidden="true">*</span>
-                    ) : (
-                      <span className="text-xs font-normal text-muted-foreground">
-                        (optional)
-                      </span>
-                    )}
+                    Full Name <span aria-hidden="true">*</span>
                   </label>
                   <Input
                     id="checkout-name"
                     type="text"
                     autoComplete="name"
                     enterKeyHint="next"
-                    required={watchedOrderType === "delivery"}
+                    required
                     aria-invalid={Boolean(errors.customerName)}
                     aria-describedby={
                       errors.customerName ? "checkout-name-error" : undefined
@@ -492,14 +338,7 @@ export function CheckoutForm() {
                     htmlFor="checkout-phone"
                     className="block text-sm font-medium"
                   >
-                    Mobile Number{" "}
-                    {watchedOrderType === "delivery" ? (
-                      <span aria-hidden="true">*</span>
-                    ) : (
-                      <span className="text-xs font-normal text-muted-foreground">
-                        (optional)
-                      </span>
-                    )}
+                    Mobile Number <span aria-hidden="true">*</span>
                   </label>
                   <p id="checkout-phone-hint" className="text-xs text-muted-foreground">
                     10-digit Indian mobile number (e.g. 9876543210)
@@ -511,7 +350,7 @@ export function CheckoutForm() {
                     autoComplete="tel"
                     enterKeyHint="next"
                     maxLength={10}
-                    required={watchedOrderType === "delivery"}
+                    required
                     aria-invalid={Boolean(errors.customerPhone)}
                     aria-describedby={
                       errors.customerPhone
@@ -533,38 +372,36 @@ export function CheckoutForm() {
                 </div>
 
                 {/* Delivery Address */}
-                {watchedOrderType === "delivery" && (
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="checkout-address"
-                      className="block text-sm font-medium"
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="checkout-address"
+                    className="block text-sm font-medium"
+                  >
+                    Full Delivery Address <span aria-hidden="true">*</span>
+                  </label>
+                  <Textarea
+                    id="checkout-address"
+                    autoComplete="street-address"
+                    required
+                    aria-invalid={Boolean(errors.deliveryAddress)}
+                    aria-describedby={
+                      errors.deliveryAddress
+                        ? "checkout-address-error"
+                        : undefined
+                    }
+                    placeholder="House/Flat no., building, street, landmark, pincode"
+                    className="min-h-24 rounded-xl"
+                    {...register("deliveryAddress")}
+                  />
+                  {errors.deliveryAddress && (
+                    <p
+                      id="checkout-address-error"
+                      className="text-xs font-medium text-destructive"
                     >
-                      Full Delivery Address <span aria-hidden="true">*</span>
-                    </label>
-                    <Textarea
-                      id="checkout-address"
-                      autoComplete="street-address"
-                      required
-                      aria-invalid={Boolean(errors.deliveryAddress)}
-                      aria-describedby={
-                        errors.deliveryAddress
-                          ? "checkout-address-error"
-                          : undefined
-                      }
-                      placeholder="House/Flat no., building, street, landmark, pincode"
-                      className="min-h-24 rounded-xl"
-                      {...register("deliveryAddress")}
-                    />
-                    {errors.deliveryAddress && (
-                      <p
-                        id="checkout-address-error"
-                        className="text-xs font-medium text-destructive"
-                      >
-                        {errors.deliveryAddress.message}
-                      </p>
-                    )}
-                  </div>
-                )}
+                      {errors.deliveryAddress.message}
+                    </p>
+                  )}
+                </div>
 
                 {/* Kitchen Notes */}
                 <div className="space-y-1.5">
@@ -593,23 +430,11 @@ export function CheckoutForm() {
                       type="hidden"
                       {...register("paymentMethod")}
                     />
-                    {watchedOrderType === "delivery" ? (
-                      <>
-                        <Banknote
-                          className="size-4 text-primary"
-                          aria-hidden="true"
-                        />
-                        <span>Cash on Delivery</span>
-                      </>
-                    ) : (
-                      <>
-                        <Store
-                          className="size-4 text-primary"
-                          aria-hidden="true"
-                        />
-                        <span>Pay at counter</span>
-                      </>
-                    )}
+                    <Banknote
+                      className="size-4 text-primary"
+                      aria-hidden="true"
+                    />
+                    <span>Cash on Delivery</span>
                   </div>
                 </fieldset>
 
@@ -680,16 +505,14 @@ export function CheckoutForm() {
                   </span>
                 </div>
 
-                {watchedOrderType === "delivery" && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Delivery fee</span>
-                    <span className="font-medium tabular-nums">
-                      {loadingSettings
-                        ? "..."
-                        : formatPrice(appliedDeliveryFee)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Delivery fee</span>
+                  <span className="font-medium tabular-nums">
+                    {loadingSettings
+                      ? "..."
+                      : formatPrice(appliedDeliveryFee)}
+                  </span>
+                </div>
 
                 <div className="flex items-center justify-between border-t border-border/60 pt-2.5 text-base font-bold">
                   <span>Total</span>

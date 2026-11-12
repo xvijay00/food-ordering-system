@@ -3,10 +3,10 @@ import { z } from "zod";
 const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
 
 const orderBaseFields = {
-  orderType: z.enum(["dine_in", "delivery"], {
-    error: "Please select Dine-in or Delivery.",
+  orderType: z.literal("delivery", {
+    error: "Only delivery orders are currently supported.",
   }),
-  tableNo: z.number().int().positive().nullable().optional(),
+  tableNo: z.null().optional(),
   customerName: z
     .string()
     .trim()
@@ -25,7 +25,7 @@ const orderBaseFields = {
     .max(300, "Delivery address must be 300 characters or fewer.")
     .optional()
     .or(z.literal("")),
-  paymentMethod: z.enum(["cod", "counter"]),
+  paymentMethod: z.literal("cod"),
   notes: z
     .string()
     .trim()
@@ -36,77 +36,40 @@ const orderBaseFields = {
 
 function validateOrderDetails(
   data: {
-    orderType: "dine_in" | "delivery";
-    tableNo?: number | null;
+    orderType: "delivery";
+    tableNo?: null;
     customerName?: string;
     customerPhone?: string;
     deliveryAddress?: string;
-    paymentMethod: "cod" | "counter";
+    paymentMethod: "cod";
   },
   ctx: z.RefinementCtx
 ) {
-  if (data.orderType === "dine_in") {
-    if (!data.tableNo || data.tableNo <= 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["tableNo"],
-        message: "Please select your table number.",
-      });
-    }
-
-    if (data.paymentMethod !== "counter") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["paymentMethod"],
-        message: "Dine-in orders must use Pay at counter.",
-      });
-    }
-
-    const trimmedPhone = data.customerPhone?.trim() ?? "";
-    if (trimmedPhone.length > 0 && !INDIAN_PHONE_REGEX.test(trimmedPhone)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["customerPhone"],
-        message: "Enter a valid 10-digit Indian mobile number.",
-      });
-    }
+  const trimmedName = data.customerName?.trim() ?? "";
+  if (trimmedName.length < 2) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["customerName"],
+      message: "Full name is required (at least 2 characters).",
+    });
   }
 
-  if (data.orderType === "delivery") {
-    const trimmedName = data.customerName?.trim() ?? "";
-    if (trimmedName.length < 2) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["customerName"],
-        message: "Full name is required (at least 2 characters).",
-      });
-    }
+  const trimmedPhone = data.customerPhone?.trim() ?? "";
+  if (!INDIAN_PHONE_REGEX.test(trimmedPhone)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["customerPhone"],
+      message: "Enter a valid 10-digit Indian mobile number (starts with 6-9).",
+    });
+  }
 
-    const trimmedPhone = data.customerPhone?.trim() ?? "";
-    if (!INDIAN_PHONE_REGEX.test(trimmedPhone)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["customerPhone"],
-        message: "Enter a valid 10-digit Indian mobile number (starts with 6-9).",
-      });
-    }
-
-    const trimmedAddress = data.deliveryAddress?.trim() ?? "";
-    if (trimmedAddress.length < 10) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["deliveryAddress"],
-        message: "Please enter your full delivery address (at least 10 characters).",
-      });
-    }
-
-    if (data.paymentMethod !== "cod") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["paymentMethod"],
-        message: "Delivery orders must use Cash on Delivery.",
-      });
-    }
+  const trimmedAddress = data.deliveryAddress?.trim() ?? "";
+  if (trimmedAddress.length < 10) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["deliveryAddress"],
+      message: "Please enter your full delivery address (at least 10 characters).",
+    });
   }
 }
 

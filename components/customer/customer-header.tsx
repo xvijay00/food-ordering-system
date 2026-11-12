@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bike, Flame, UtensilsCrossed } from "lucide-react";
+import { Bike } from "lucide-react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { CUSTOMER_NAV_ITEMS } from "@/components/customer/nav-items";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +15,6 @@ import { calculateCartItemCount, useCartStore } from "@/store/cart";
 export function CustomerHeader() {
   const pathname = usePathname();
   const items = useCartStore((state) => state.items);
-  const orderType = useCartStore((state) => state.orderType);
-  const tableNo = useCartStore((state) => state.tableNo);
   const hydrated = useHydrated();
 
   const itemCount = hydrated ? calculateCartItemCount(items) : 0;
@@ -27,12 +26,12 @@ export function CustomerHeader() {
           href="/"
           className="inline-flex min-h-11 items-center gap-2.5 rounded-lg pr-2 font-heading text-base font-semibold tracking-tight text-foreground transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          <span
-            aria-hidden="true"
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30 dark:bg-amber-400/15 dark:text-amber-400 dark:ring-amber-400/30"
-          >
-            <Flame className="size-4" />
-          </span>
+          <BrandLogo
+            size={36}
+            priority
+            decorative
+            className="size-9 rounded-lg"
+          />
           <span className="truncate">{RESTAURANT_CONFIG.name}</span>
         </Link>
 
@@ -59,24 +58,13 @@ export function CustomerHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {hydrated && orderType === "dine_in" && tableNo !== null && (
-            <Badge
-              variant="secondary"
-              className="hidden gap-1.5 px-2.5 py-1 text-xs sm:inline-flex"
-            >
-              <UtensilsCrossed className="size-3" aria-hidden="true" />
-              Table {tableNo}
-            </Badge>
-          )}
-          {hydrated && orderType === "delivery" && (
-            <Badge
-              variant="secondary"
-              className="hidden gap-1.5 px-2.5 py-1 text-xs sm:inline-flex"
-            >
-              <Bike className="size-3" aria-hidden="true" />
-              Delivery
-            </Badge>
-          )}
+          <Badge
+            variant="secondary"
+            className="hidden gap-1.5 px-2.5 py-1 text-xs sm:inline-flex"
+          >
+            <Bike className="size-3" aria-hidden="true" />
+            Delivery
+          </Badge>
           <ThemeToggle />
         </div>
       </div>

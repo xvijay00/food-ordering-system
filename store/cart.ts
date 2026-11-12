@@ -83,7 +83,7 @@ export function calculateCartTotal(
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
-      orderType: null,
+      orderType: "delivery",
       tableNo: null,
       notes: "",
       items: [],
@@ -166,7 +166,7 @@ export const useCartStore = create<CartState>()(
 
       clear: () => set({ items: [], notes: "" }),
 
-      reset: () => set({ orderType: null, tableNo: null, notes: "", items: [] }),
+      reset: () => set({ orderType: "delivery", tableNo: null, notes: "", items: [] }),
 
       getItemCount: () => calculateCartItemCount(get().items),
 
