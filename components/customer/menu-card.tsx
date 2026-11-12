@@ -125,79 +125,20 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
 
   return (
     <Card
-      className={`flex flex-col justify-between gap-4 rounded-2xl p-4 transition-shadow hover:shadow-md ${
+      className={`group flex flex-col justify-between overflow-hidden rounded-3xl p-0 transition-all hover:shadow-lg ${
         isOutOfStock ? "opacity-65 grayscale" : ""
       }`}
     >
-      <div className="flex gap-3.5">
-        <div className="flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <VegIndicator isVeg={item.is_veg} />
-            {item.is_bestseller && (
-              <Badge
-                variant="secondary"
-                className="gap-1 bg-amber-500/15 text-[11px] text-amber-700 dark:text-amber-300"
-              >
-                <Sparkles className="size-3" aria-hidden="true" />
-                Bestseller
-              </Badge>
-            )}
-            {hasDiscount && !isOutOfStock && (
-              <Badge
-                variant="secondary"
-                className="gap-1 bg-emerald-500/15 text-[11px] text-emerald-700 dark:text-emerald-300"
-              >
-                <Tag className="size-2.5" aria-hidden="true" />
-                {discountPercent}% OFF
-              </Badge>
-            )}
-            {isOutOfStock ? (
-              <Badge variant="secondary" className="text-[11px]">
-                Sold out
-              </Badge>
-            ) : (
-              stockQty !== null &&
-              stockQty <= 5 && (
-                <Badge
-                  variant="secondary"
-                  className="bg-rose-500/10 text-[11px] text-rose-700 dark:text-rose-300"
-                >
-                  Only {stockQty} left
-                </Badge>
-              )
-            )}
-          </div>
-
-          <div>
-            <h3 className="font-heading text-base font-semibold leading-snug">
-              {item.name}
-            </h3>
-            {item.description && (
-              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                {item.description}
-              </p>
-            )}
-            {(flavours.length > 0 || eggOptions.length > 0) && (
-              <p className="mt-1.5 line-clamp-1 text-[11px] text-muted-foreground">
-                {[
-                  flavours.length > 0 ? flavours.slice(0, 3).join(", ") : null,
-                  eggOptions.length > 0 ? eggOptions.join(" / ") : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted/60 ring-1 ring-border/50 sm:size-26">
+      <div>
+        {/* Large Product Photo Box */}
+        <div className="relative h-56 w-full overflow-hidden bg-muted/60 sm:h-64">
           {showImage && activeImageUrl ? (
             <Image
               src={activeImageUrl}
               alt={`${item.name} photo ${imageIndex + 1}`}
               fill
-              sizes="(max-width: 640px) 96px, 104px"
-              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 540px"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
               onError={() =>
                 setFailedImages((prev) => ({ ...prev, [imageIndex]: true }))
               }
@@ -205,10 +146,20 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
           ) : (
             <div
               aria-hidden="true"
-              className="flex size-full items-center justify-center text-muted-foreground/50"
+              className="flex size-full items-center justify-center text-muted-foreground/40"
             >
-              <UtensilsCrossed className="size-7" />
+              <UtensilsCrossed className="size-14" />
             </div>
+          )}
+
+          {hasDiscount && !isOutOfStock && (
+            <Badge
+              variant="secondary"
+              className="absolute top-3 right-3 gap-1 bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm"
+            >
+              <Tag className="size-3" aria-hidden="true" />
+              {discountPercent}% OFF
+            </Badge>
           )}
 
           {images.length > 1 && (
@@ -222,9 +173,9 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
                     (prev) => (prev - 1 + images.length) % images.length
                   );
                 }}
-                className="absolute top-1/2 left-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75"
+                className="absolute top-1/2 left-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/80"
               >
-                <ChevronLeft className="size-3" aria-hidden="true" />
+                <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -233,16 +184,16 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
                   e.stopPropagation();
                   setImageIndex((prev) => (prev + 1) % images.length);
                 }}
-                className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75"
+                className="absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/80"
               >
-                <ChevronRight className="size-3" aria-hidden="true" />
+                <ChevronRight className="size-4" aria-hidden="true" />
               </button>
-              <div className="absolute right-0 bottom-1 left-0 flex justify-center gap-1">
+              <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1.5">
                 {images.map((_, idx) => (
                   <span
                     key={idx}
-                    className={`size-1.5 rounded-full ${
-                      idx === imageIndex ? "bg-white" : "bg-white/45"
+                    className={`size-2 rounded-full transition-all ${
+                      idx === imageIndex ? "w-5 bg-white" : "bg-white/55"
                     }`}
                   />
                 ))}
@@ -250,28 +201,82 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
             </>
           )}
         </div>
+
+        {/* Product Details */}
+        <div className="space-y-2.5 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <VegIndicator isVeg={item.is_veg} />
+            {item.is_bestseller && (
+              <Badge
+                variant="secondary"
+                className="gap-1 bg-amber-500/15 text-xs text-amber-700 dark:text-amber-300"
+              >
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                Bestseller
+              </Badge>
+            )}
+            {isOutOfStock ? (
+              <Badge variant="secondary" className="text-xs">
+                Sold out
+              </Badge>
+            ) : (
+              stockQty !== null &&
+              stockQty <= 5 && (
+                <Badge
+                  variant="secondary"
+                  className="bg-rose-500/10 text-xs text-rose-700 dark:text-rose-300"
+                >
+                  Only {stockQty} left
+                </Badge>
+              )
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-heading text-xl font-bold leading-snug tracking-tight sm:text-2xl">
+              {item.name}
+            </h3>
+            {item.description && (
+              <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                {item.description}
+              </p>
+            )}
+            {(flavours.length > 0 || eggOptions.length > 0) && (
+              <p className="mt-2 line-clamp-1 text-xs font-medium text-muted-foreground">
+                {[
+                  flavours.length > 0 ? flavours.slice(0, 3).join(", ") : null,
+                  eggOptions.length > 0 ? eggOptions.join(" / ") : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+      <div className="flex items-center justify-between gap-3 border-t border-border/50 px-5 py-4 sm:px-6">
         <div>
           {minVariantPrice !== null ? (
-            <p className="text-base font-bold">
+            <p className="text-xl font-bold tracking-tight">
               From {formatPrice(minVariantPrice)}
             </p>
           ) : hasDiscount ? (
-            <div className="flex flex-wrap items-baseline gap-1.5">
-              <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <p className="text-xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
                 {formatPrice(sellingPrice)}
               </p>
-              <p className="text-xs text-muted-foreground line-through">
+              <p className="text-sm text-muted-foreground line-through">
                 {formatPrice(originalPrice)}
               </p>
             </div>
           ) : (
-            <p className="text-base font-bold">{formatPrice(originalPrice)}</p>
+            <p className="text-xl font-bold tracking-tight">
+              {formatPrice(originalPrice)}
+            </p>
           )}
           {hasCustomization && (
-            <p className="text-[11px] text-muted-foreground">Customizable</p>
+            <p className="text-xs text-muted-foreground">Customizable</p>
           )}
         </div>
 
@@ -280,12 +285,12 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
             type="button"
             variant="outline"
             disabled
-            className="min-h-10 rounded-xl px-4 font-semibold"
+            className="min-h-11 rounded-xl px-5 text-sm font-semibold"
           >
             Sold out
           </Button>
         ) : simpleCartItem ? (
-          <div className="inline-flex items-center rounded-xl border border-primary/30 bg-primary/10 p-0.5">
+          <div className="inline-flex items-center rounded-xl border border-primary/30 bg-primary/10 p-1">
             <Button
               type="button"
               variant="ghost"
@@ -296,7 +301,7 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
             >
               <Minus className="size-4" aria-hidden="true" />
             </Button>
-            <span className="min-w-7 text-center text-sm font-bold text-primary tabular-nums">
+            <span className="min-w-8 text-center text-sm font-bold text-primary tabular-nums">
               {simpleCartItem.quantity}
             </span>
             <Button
@@ -319,7 +324,7 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
             }
             disabled={isDisabled}
             onClick={handleDirectAdd}
-            className="min-h-10 rounded-xl px-4 font-semibold"
+            className="min-h-11 rounded-xl px-6 text-sm font-semibold"
           >
             {hasCustomization && totalInCartForItem > 0
               ? `Add (${totalInCartForItem})`

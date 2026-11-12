@@ -23,7 +23,7 @@ export function FeaturedProducts({ items, shopOpen }: FeaturedProductsProps) {
   return (
     <section
       aria-labelledby="featured-bakery-heading"
-      className="mx-auto w-full max-w-5xl px-4 pb-16"
+      className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6"
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
@@ -47,7 +47,7 @@ export function FeaturedProducts({ items, shopOpen }: FeaturedProductsProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {items.map((item) => (
           <MenuCard
             key={item.id}
