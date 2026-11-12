@@ -4,8 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import {
   Bike,
+  CalendarClock,
   Check,
   Clock,
+  ExternalLink,
   Loader2,
   MapPin,
   Phone,
@@ -100,6 +102,19 @@ export function OrderCard({
               <Clock className="size-3" aria-hidden="true" />
               <span>{formatTimeSince(order.created_at, nowMs)}</span>
             </p>
+            {order.preorder_at && (
+              <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
+                <CalendarClock className="size-3" aria-hidden="true" />
+                <span>
+                  Pre-order:{" "}
+                  {new Date(order.preorder_at).toLocaleString("en-IN", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone: "Asia/Kolkata",
+                  })}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col items-end gap-1 text-right">
@@ -165,10 +180,33 @@ export function OrderCard({
                     {item.variant_label ? ` (${item.variant_label})` : ""}
                   </span>
                 </div>
+                {(item.selected_flavour || item.egg_preference) && (
+                  <p className="pl-4 text-[11px] text-muted-foreground">
+                    {[item.selected_flavour, item.egg_preference]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
                 {addons.length > 0 && (
                   <p className="pl-4 text-[11px] text-muted-foreground">
                     + {addons.map((a) => a.name).join(", ")}
                   </p>
+                )}
+                {item.cake_message && (
+                  <p className="pl-4 text-[11px] font-medium text-amber-800 dark:text-amber-300">
+                    Cake msg: &ldquo;{item.cake_message}&rdquo;
+                  </p>
+                )}
+                {item.custom_image_url && (
+                  <a
+                    href={item.custom_image_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 pl-4 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    <ExternalLink className="size-3" aria-hidden="true" />
+                    <span>View custom cake design</span>
+                  </a>
                 )}
               </li>
             );

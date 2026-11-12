@@ -32,6 +32,13 @@ const orderBaseFields = {
     .max(300, "Notes must be 300 characters or fewer.")
     .optional()
     .or(z.literal("")),
+  preorderAt: z
+    .string()
+    .trim()
+    .max(64)
+    .nullable()
+    .optional()
+    .or(z.literal("")),
 };
 
 function validateOrderDetails(
@@ -42,6 +49,7 @@ function validateOrderDetails(
     customerPhone?: string;
     deliveryAddress?: string;
     paymentMethod: "cod";
+    preorderAt?: string | null;
   },
   ctx: z.RefinementCtx
 ) {
@@ -71,6 +79,24 @@ function validateOrderDetails(
       message: "Please enter your full delivery address (at least 10 characters).",
     });
   }
+
+  const trimmedPreorder = data.preorderAt?.trim() ?? "";
+  if (trimmedPreorder.length > 0) {
+    const parsedDate = new Date(trimmedPreorder);
+    if (Number.isNaN(parsedDate.getTime())) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["preorderAt"],
+        message: "Please choose a valid pre-order date and time.",
+      });
+    } else if (parsedDate.getTime() < Date.now() + 15 * 60 * 1000) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["preorderAt"],
+        message: "Pre-order time must be at least 15 minutes from now.",
+      });
+    }
+  }
 }
 
 export const checkoutFormSchema = z
@@ -83,6 +109,10 @@ export const orderItemInputSchema = z.strictObject({
   menuItemId: z.string().uuid("Invalid menu item ID."),
   variantId: z.string().uuid("Invalid variant ID.").nullable().optional(),
   addonIds: z.array(z.string().uuid("Invalid add-on ID.")).optional(),
+  selectedFlavour: z.string().trim().max(40).nullable().optional(),
+  eggPreference: z.string().trim().max(30).nullable().optional(),
+  cakeMessage: z.string().trim().max(120).nullable().optional(),
+  customImageUrl: z.string().trim().url().nullable().optional(),
   quantity: z.number().int().min(1, "Quantity must be at least 1.").max(50),
 });
 

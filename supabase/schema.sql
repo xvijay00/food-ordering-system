@@ -15,17 +15,25 @@ create table if not exists public.categories (
   is_active boolean not null default true
 );
 
--- Individual dishes / beverages belonging to a category
+-- Individual dishes / bakery products belonging to a category
 create table if not exists public.menu_items (
   id uuid primary key default gen_random_uuid(),
   category_id uuid not null references public.categories(id) on delete restrict,
   name text not null,
   description text,
   price numeric(10, 2) not null check (price >= 0),
+  discount_price numeric(10, 2) check (discount_price is null or discount_price >= 0),
+  stock_quantity integer check (stock_quantity is null or stock_quantity >= 0),
   image_url text,
+  image_urls jsonb not null default '[]'::jsonb,
   is_veg boolean not null default true,
   is_available boolean not null default true,
   is_bestseller boolean not null default false,
+  is_featured boolean not null default false,
+  flavours jsonb not null default '[]'::jsonb,
+  egg_options jsonb not null default '[]'::jsonb,
+  allow_custom_message boolean not null default false,
+  allow_custom_image boolean not null default false,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
@@ -79,6 +87,7 @@ create table if not exists public.orders (
   delivery_fee numeric(10, 2) not null default 0 check (delivery_fee >= 0),
   total numeric(10, 2) not null check (total >= 0),
   notes text,
+  preorder_at timestamptz,
   cancel_reason text,
   created_at timestamptz not null default now()
 );
@@ -91,6 +100,10 @@ create table if not exists public.order_items (
   item_name text not null,
   variant_label text,
   addons jsonb not null default '[]'::jsonb,
+  selected_flavour text,
+  egg_preference text,
+  cake_message text,
+  custom_image_url text,
   unit_price numeric(10, 2) not null check (unit_price >= 0),
   quantity integer not null check (quantity > 0),
   line_total numeric(10, 2) not null check (line_total >= 0)

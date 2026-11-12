@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { getEffectiveBasePrice } from "@/lib/bakery-constants";
+import { isMissingColumnError } from "@/lib/bakery-queries";
 import { sendStaffOrderPush } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { placeOrderSchema } from "@/lib/validations";
@@ -9,7 +11,13 @@ type MenuRowWithOptions = {
   id: string;
   name: string;
   price: number;
+  discount_price?: number | null;
+  stock_quantity?: number | null;
   is_available: boolean;
+  flavours?: string[] | null;
+  egg_options?: string[] | null;
+  allow_custom_message?: boolean | null;
+  allow_custom_image?: boolean | null;
   item_variants: { id: string; label: string; price: number }[];
   item_addons: { id: string; name: string; price: number; is_active: boolean }[];
 };
@@ -122,12 +130,25 @@ export async function POST(request: Request) {
     const uniqueMenuIds = [
       ...new Set(input.items.map((item) => item.menuItemId)),
     ];
-    const { data: menuRows, error: menuError } = await admin
+    let { data: menuRows, error: menuError } = await admin
       .from("menu_items")
       .select(
-        "id, name, price, is_available, item_variants(id, label, price), item_addons(id, name, price, is_active)"
+        "id, name, price, discount_price, stock_quantity, is_available, flavours, egg_options, allow_custom_message, allow_custom_image, item_variants(id, label, price), item_addons(id, name, price, is_active)"
       )
       .in("id", uniqueMenuIds);
+
+    let bakeryColumnsAvailable = true;
+    if (menuError && isMissingColumnError(menuError)) {
+      bakeryColumnsAvailable = false;
+      const fallback = await admin
+        .from("menu_items")
+        .select(
+          "id, name, price, is_available, item_variants(id, label, price), item_addons(id, name, price, is_active)"
+        )
+        .in("id", uniqueMenuIds);
+      menuRows = fallback.data as typeof menuRows;
+      menuError = fallback.error;
+    }
 
     if (menuError) {
       return NextResponse.json(
@@ -140,10 +161,40 @@ export async function POST(request: Request) {
       ((menuRows ?? []) as MenuRowWithOptions[]).map((row) => [row.id, row])
     );
 
-    // 4. Verify availability and recalculate all prices on the server
+    // Check total requested quantity per menuItemId against stock_quantity
+    const requestedQtyByMenuId = new Map<string, number>();
+    for (const reqItem of input.items) {
+      requestedQtyByMenuId.set(
+        reqItem.menuItemId,
+        (requestedQtyByMenuId.get(reqItem.menuItemId) ?? 0) + reqItem.quantity
+      );
+    }
+
+    // 4. Verify availability, stock, and recalculate all prices on the server
     let subtotal = 0;
     const orderItemSnapshots: Omit<TablesInsert<"order_items">, "order_id">[] =
       [];
+
+    for (const [menuId, totalQty] of requestedQtyByMenuId.entries()) {
+      const menuItem = menuMap.get(menuId);
+      if (
+        menuItem &&
+        menuItem.stock_quantity !== null &&
+        menuItem.stock_quantity !== undefined &&
+        totalQty > Number(menuItem.stock_quantity)
+      ) {
+        const left = Math.max(0, Number(menuItem.stock_quantity));
+        return NextResponse.json(
+          {
+            error:
+              left === 0
+                ? `"${menuItem.name}" is out of stock.`
+                : `Only ${left} left in stock for "${menuItem.name}".`,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     for (const reqItem of input.items) {
       const menuItem = menuMap.get(reqItem.menuItemId);
@@ -163,7 +214,7 @@ export async function POST(request: Request) {
         );
       }
 
-      let basePrice = Number(menuItem.price);
+      let basePrice = getEffectiveBasePrice(menuItem).sellingPrice;
       let resolvedVariantLabel: string | null = null;
 
       if (reqItem.variantId) {
@@ -224,6 +275,10 @@ export async function POST(request: Request) {
         item_name: menuItem.name,
         variant_label: resolvedVariantLabel,
         addons: resolvedAddons,
+        selected_flavour: reqItem.selectedFlavour?.trim() || null,
+        egg_preference: reqItem.eggPreference?.trim() || null,
+        cake_message: reqItem.cakeMessage?.trim() || null,
+        custom_image_url: reqItem.customImageUrl?.trim() || null,
         unit_price: unitPrice,
         quantity: reqItem.quantity,
         line_total: lineTotal,
@@ -256,26 +311,47 @@ export async function POST(request: Request) {
 
     const resolvedName = input.customerName?.trim() || "Guest";
     const resolvedPhone = input.customerPhone?.trim() || "N/A";
+    const resolvedPreorderAt =
+      input.preorderAt && input.preorderAt.trim().length > 0
+        ? new Date(input.preorderAt.trim()).toISOString()
+        : null;
 
     // 6. Insert into orders, order_items, and order_status_history (rollback on error)
-    const { data: createdOrder, error: orderInsertError } = await admin
+    const orderPayload: TablesInsert<"orders"> = {
+      order_type: "delivery",
+      table_id: null,
+      customer_name: resolvedName,
+      customer_phone: resolvedPhone,
+      delivery_address: input.deliveryAddress?.trim() || null,
+      status: "placed",
+      payment_method: input.paymentMethod,
+      payment_status: "pending",
+      subtotal,
+      delivery_fee: deliveryFee,
+      total,
+      notes: input.notes?.trim() || null,
+      ...(bakeryColumnsAvailable && resolvedPreorderAt
+        ? { preorder_at: resolvedPreorderAt }
+        : {}),
+    };
+
+    let { data: createdOrder, error: orderInsertError } = await admin
       .from("orders")
-      .insert({
-        order_type: "delivery",
-        table_id: null,
-        customer_name: resolvedName,
-        customer_phone: resolvedPhone,
-        delivery_address: input.deliveryAddress?.trim() || null,
-        status: "placed",
-        payment_method: input.paymentMethod,
-        payment_status: "pending",
-        subtotal,
-        delivery_fee: deliveryFee,
-        total,
-        notes: input.notes?.trim() || null,
-      })
+      .insert(orderPayload)
       .select("id, order_token, order_no")
       .single();
+
+    if (orderInsertError && isMissingColumnError(orderInsertError)) {
+      const { preorder_at: _ignored, ...baseOrderPayload } = orderPayload;
+      void _ignored;
+      const retry = await admin
+        .from("orders")
+        .insert(baseOrderPayload)
+        .select("id, order_token, order_no")
+        .single();
+      createdOrder = retry.data;
+      orderInsertError = retry.error;
+    }
 
     if (orderInsertError || !createdOrder) {
       return NextResponse.json(
@@ -284,12 +360,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error: itemsInsertError } = await admin.from("order_items").insert(
-      orderItemSnapshots.map((item) => ({
-        ...item,
-        order_id: createdOrder.id,
-      }))
-    );
+    const orderItemsToInsert = orderItemSnapshots.map((item) => ({
+      ...item,
+      order_id: createdOrder.id,
+    }));
+
+    let { error: itemsInsertError } = await admin
+      .from("order_items")
+      .insert(orderItemsToInsert);
+
+    if (itemsInsertError && isMissingColumnError(itemsInsertError)) {
+      const strippedItems = orderItemsToInsert.map(
+        ({
+          selected_flavour: _sf,
+          egg_preference: _ep,
+          cake_message: _cm,
+          custom_image_url: _ci,
+          ...rest
+        }) => {
+          void _sf;
+          void _ep;
+          void _cm;
+          void _ci;
+          return rest;
+        }
+      );
+      const retryItems = await admin.from("order_items").insert(strippedItems);
+      itemsInsertError = retryItems.error;
+    }
 
     if (itemsInsertError) {
       await admin.from("orders").delete().eq("id", createdOrder.id);
@@ -313,6 +411,27 @@ export async function POST(request: Request) {
         { error: "Failed to initialize order tracking. Please try again." },
         { status: 500 }
       );
+    }
+
+    // Best-effort stock decrement
+    if (bakeryColumnsAvailable) {
+      for (const [menuId, orderedQty] of requestedQtyByMenuId.entries()) {
+        const menuItem = menuMap.get(menuId);
+        if (
+          menuItem &&
+          menuItem.stock_quantity !== null &&
+          menuItem.stock_quantity !== undefined
+        ) {
+          const nextStock = Math.max(0, Number(menuItem.stock_quantity) - orderedQty);
+          await admin
+            .from("menu_items")
+            .update({
+              stock_quantity: nextStock,
+              is_available: nextStock > 0 ? menuItem.is_available : false,
+            })
+            .eq("id", menuId);
+        }
+      }
     }
 
     // Best-effort staff Web Push notification

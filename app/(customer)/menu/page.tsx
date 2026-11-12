@@ -1,4 +1,5 @@
 import { MenuBrowser } from "@/components/customer/menu-browser";
+import { fetchMenuCatalog } from "@/lib/bakery-queries";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import type { Category, MenuItemWithRelations } from "@/types/database";
@@ -13,37 +14,16 @@ export default async function MenuPage() {
 
   try {
     const supabase = await createClient();
+    const catalog = await fetchMenuCatalog(supabase, {
+      activeCategoriesOnly: true,
+    });
 
-    const [categoriesRes, itemsRes] = await Promise.all([
-      supabase
-        .from("categories")
-        .select("id, name, sort_order, is_active")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true }),
-      supabase
-        .from("menu_items")
-        .select(
-          "id, category_id, name, description, price, image_url, is_veg, is_available, is_bestseller, sort_order, created_at, item_variants(id, item_id, label, price), item_addons(id, item_id, name, price, is_active)"
-        )
-        .order("sort_order", { ascending: true }),
-    ]);
-
-    if (categoriesRes.error) {
-      throw new Error(categoriesRes.error.message);
-    }
-    if (itemsRes.error) {
-      throw new Error(itemsRes.error.message);
+    if (catalog.error) {
+      throw new Error(catalog.error);
     }
 
-    categories = categoriesRes.data ?? [];
-    menuItems = ((itemsRes.data ?? []) as MenuItemWithRelations[]).map(
-      (item) => ({
-        ...item,
-        item_variants: [...(item.item_variants ?? [])].sort(
-          (a, b) => Number(a.price) - Number(b.price)
-        ),
-      })
-    );
+    categories = catalog.categories;
+    menuItems = catalog.items;
 
     try {
       const admin = createAdminClient();

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getStaff } from "@/lib/get-staff";
+import { fetchAdminOrderById } from "@/lib/bakery-queries";
 import { createAdminClient } from "@/lib/supabase-admin";
 import type { TablesUpdate } from "@/types/database";
 
@@ -52,16 +53,10 @@ export async function GET(
   }
 
   const admin = createAdminClient();
-  const { data: order, error } = await admin
-    .from("orders")
-    .select(
-      "id, order_token, order_no, order_type, table_id, customer_name, customer_phone, delivery_address, status, payment_method, payment_status, subtotal, delivery_fee, total, notes, cancel_reason, created_at, restaurant_tables(id, table_number, is_active), order_items(id, order_id, menu_item_id, item_name, variant_label, addons, unit_price, quantity, line_total), order_status_history(id, order_id, status, changed_by, changed_at)"
-    )
-    .eq("id", parsedId.data)
-    .maybeSingle();
+  const { order, error } = await fetchAdminOrderById(admin, parsedId.data);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error }, { status: 500 });
   }
 
   if (!order) {

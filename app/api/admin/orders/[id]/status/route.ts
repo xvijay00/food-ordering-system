@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { fetchAdminOrderById } from "@/lib/bakery-queries";
 import { getStaff } from "@/lib/get-staff";
 import { canRoleTransitionOrder } from "@/lib/order-transitions";
 import { createAdminClient } from "@/lib/supabase-admin";
@@ -107,18 +108,14 @@ export async function PATCH(
       updatePayload.cancel_reason = cancel_reason?.trim() || null;
     }
 
-    const { data: updatedOrder, error: updateError } = await admin
+    const { error: updateError } = await admin
       .from("orders")
       .update(updatePayload)
-      .eq("id", existingOrder.id)
-      .select(
-        "id, order_token, order_no, order_type, table_id, customer_name, customer_phone, delivery_address, status, payment_method, payment_status, subtotal, delivery_fee, total, notes, cancel_reason, created_at, restaurant_tables(id, table_number, is_active), order_items(id, order_id, menu_item_id, item_name, variant_label, addons, unit_price, quantity, line_total), order_status_history(id, order_id, status, changed_by, changed_at)"
-      )
-      .single();
+      .eq("id", existingOrder.id);
 
-    if (updateError || !updatedOrder) {
+    if (updateError) {
       return NextResponse.json(
-        { error: updateError?.message ?? "Failed to update order status." },
+        { error: updateError.message ?? "Failed to update order status." },
         { status: 500 }
       );
     }
@@ -126,7 +123,7 @@ export async function PATCH(
     const { error: historyError } = await admin
       .from("order_status_history")
       .insert({
-        order_id: updatedOrder.id,
+        order_id: existingOrder.id,
         status: targetStatus,
         changed_by: staff.id,
       });
@@ -134,6 +131,18 @@ export async function PATCH(
     if (historyError) {
       return NextResponse.json(
         { error: "Order updated, but failed to write status history." },
+        { status: 500 }
+      );
+    }
+
+    const { order: updatedOrder, error: reloadError } = await fetchAdminOrderById(
+      admin,
+      existingOrder.id
+    );
+
+    if (reloadError || !updatedOrder) {
+      return NextResponse.json(
+        { error: reloadError ?? "Order updated, but failed to reload details." },
         { status: 500 }
       );
     }

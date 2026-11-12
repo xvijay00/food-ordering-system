@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { OrderDetailBill } from "@/components/admin/order-detail-bill";
+import { fetchAdminOrderById } from "@/lib/bakery-queries";
 import { getStaff } from "@/lib/get-staff";
 import { getRestaurantAdminSettings } from "@/lib/restaurant-settings";
 import { createAdminClient } from "@/lib/supabase-admin";
@@ -31,19 +32,13 @@ export default async function AdminOrderDetailPage({
 
   try {
     const admin = createAdminClient();
-    const { data, error } = await admin
-      .from("orders")
-      .select(
-        "id, order_token, order_no, order_type, table_id, customer_name, customer_phone, delivery_address, status, payment_method, payment_status, subtotal, delivery_fee, total, notes, cancel_reason, created_at, restaurant_tables(id, table_number, is_active), order_items(id, order_id, menu_item_id, item_name, variant_label, addons, unit_price, quantity, line_total), order_status_history(id, order_id, status, changed_by, changed_at)"
-      )
-      .eq("id", id)
-      .maybeSingle();
+    const { order: fetchedOrder, error } = await fetchAdminOrderById(admin, id);
 
-    if (error || !data) {
+    if (error || !fetchedOrder) {
       notFound();
     }
 
-    order = data as OrderWithItems;
+    order = fetchedOrder;
 
     const changedByIds = Array.from(
       new Set(

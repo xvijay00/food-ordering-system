@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Banknote,
   Bike,
+  CalendarClock,
   Loader2,
   ShoppingBag,
 } from "lucide-react";
@@ -35,6 +36,13 @@ import type { AppSettings } from "@/types/database";
 
 const MY_ORDERS_STORAGE_KEY = "my_orders";
 
+function formatLocalDateTimeInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate()
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export function CheckoutForm() {
   const router = useRouter();
   const hydrated = useHydrated();
@@ -51,6 +59,13 @@ export function CheckoutForm() {
   });
   const [loadingSettings, setLoadingSettings] = React.useState(true);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [deliveryTiming, setDeliveryTiming] = React.useState<
+    "now" | "preorder"
+  >("now");
+  const minPreorderLocal = React.useMemo(
+    () => formatLocalDateTimeInput(new Date(Date.now() + 20 * 60 * 1000)),
+    []
+  );
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
@@ -63,12 +78,14 @@ export function CheckoutForm() {
       deliveryAddress: "",
       paymentMethod: "cod",
       notes: "",
+      preorderAt: "",
     },
   });
 
   const {
     register,
     handleSubmit,
+    setError,
     setValue,
     formState: { errors, isSubmitting },
   } = form;
@@ -170,6 +187,19 @@ export function CheckoutForm() {
       return;
     }
 
+    if (deliveryTiming === "preorder" && !values.preorderAt?.trim()) {
+      setError("preorderAt", {
+        type: "manual",
+        message: "Please choose your pre-order delivery date and time.",
+      });
+      return;
+    }
+
+    const preorderIso =
+      deliveryTiming === "preorder" && values.preorderAt?.trim()
+        ? new Date(values.preorderAt.trim()).toISOString()
+        : null;
+
     try {
       const payloadBody = {
         orderType: "delivery" as const,
@@ -178,6 +208,7 @@ export function CheckoutForm() {
         customerPhone: values.customerPhone?.trim() || "",
         deliveryAddress: values.deliveryAddress?.trim() || "",
         notes: values.notes?.trim() || "",
+        preorderAt: preorderIso,
         paymentMethod: "cod" as const,
         items: items.map((item) => {
           const addonIds = item.addons
@@ -188,6 +219,16 @@ export function CheckoutForm() {
             menuItemId: item.menuItemId,
             ...(item.variantId ? { variantId: item.variantId } : {}),
             ...(addonIds.length > 0 ? { addonIds } : {}),
+            ...(item.selectedFlavour
+              ? { selectedFlavour: item.selectedFlavour }
+              : {}),
+            ...(item.eggPreference
+              ? { eggPreference: item.eggPreference }
+              : {}),
+            ...(item.cakeMessage ? { cakeMessage: item.cakeMessage } : {}),
+            ...(item.customImageUrl
+              ? { customImageUrl: item.customImageUrl }
+              : {}),
             quantity: item.quantity,
           };
         }),
@@ -422,6 +463,69 @@ export function CheckoutForm() {
                   />
                 </div>
 
+                {/* Pre-Order Date & Time */}
+                <fieldset className="space-y-2.5">
+                  <legend className="text-sm font-medium">
+                    Delivery Schedule
+                  </legend>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeliveryTiming("now");
+                        setValue("preorderAt", "", { shouldValidate: true });
+                      }}
+                      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors ${
+                        deliveryTiming === "now"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-background text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <Bike className="size-4" aria-hidden="true" />
+                      <span>Deliver Now</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeliveryTiming("preorder");
+                      }}
+                      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors ${
+                        deliveryTiming === "preorder"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-background text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <CalendarClock className="size-4" aria-hidden="true" />
+                      <span>Schedule Pre-order</span>
+                    </button>
+                  </div>
+
+                  {deliveryTiming === "preorder" && (
+                    <div className="space-y-1.5 rounded-xl border border-border/70 bg-muted/30 p-3">
+                      <label
+                        htmlFor="checkout-preorder"
+                        className="block text-xs font-medium"
+                      >
+                        Choose Pre-order Date &amp; Time{" "}
+                        <span aria-hidden="true">*</span>
+                      </label>
+                      <Input
+                        id="checkout-preorder"
+                        type="datetime-local"
+                        min={minPreorderLocal}
+                        aria-invalid={Boolean(errors.preorderAt)}
+                        className="h-11 rounded-xl bg-background"
+                        {...register("preorderAt")}
+                      />
+                      {errors.preorderAt && (
+                        <p className="text-xs font-medium text-destructive">
+                          {errors.preorderAt.message}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </fieldset>
+
                 {/* Payment Method */}
                 <fieldset className="space-y-2">
                   <legend className="text-sm font-medium">Payment Method</legend>
@@ -480,16 +584,35 @@ export function CheckoutForm() {
               <CardTitle className="text-base">Bill Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-4 sm:p-5">
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2.5 text-sm">
                 {items.map((item) => (
                   <li
                     key={item.id}
                     className="flex items-start justify-between gap-2"
                   >
-                    <span className="text-muted-foreground">
-                      {item.quantity}x {item.name}
-                      {item.variantLabel ? ` (${item.variantLabel})` : ""}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="text-muted-foreground">
+                        {item.quantity}x {item.name}
+                        {item.variantLabel ? ` (${item.variantLabel})` : ""}
+                      </span>
+                      {(item.selectedFlavour ||
+                        item.eggPreference ||
+                        item.cakeMessage ||
+                        item.customImageUrl) && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {[
+                            item.selectedFlavour,
+                            item.eggPreference,
+                            item.cakeMessage
+                              ? `Msg: "${item.cakeMessage}"`
+                              : null,
+                            item.customImageUrl ? "Custom design photo" : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
+                    </div>
                     <span className="shrink-0 font-medium tabular-nums">
                       {formatPrice(item.unitPrice * item.quantity)}
                     </span>

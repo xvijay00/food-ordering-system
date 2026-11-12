@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getAdminSession } from "@/lib/admin-auth";
+import {
+  fetchMenuCatalog,
+  isMissingColumnError,
+  normalizeMenuItem,
+} from "@/lib/bakery-queries";
 import { createAdminClient } from "@/lib/supabase-admin";
 
 const variantInputSchema = z.strictObject({
@@ -15,34 +20,99 @@ const addonInputSchema = z.strictObject({
   is_active: z.boolean().default(true),
 });
 
-const createMenuItemSchema = z.strictObject({
-  category_id: z.string().uuid("Please select a category."),
-  name: z.string().trim().min(2, "Item name is required.").max(120),
-  description: z.string().trim().max(400).nullable().optional(),
-  price: z.number().min(0, "Price must be 0 or higher."),
-  image_url: z.string().trim().url().nullable().optional(),
-  is_veg: z.boolean().default(true),
-  is_available: z.boolean().default(true),
-  is_bestseller: z.boolean().default(false),
-  sort_order: z.number().int().min(0).default(0),
-  variants: z.array(variantInputSchema).optional(),
-  addons: z.array(addonInputSchema).optional(),
-});
+const createMenuItemSchema = z
+  .strictObject({
+    category_id: z.string().uuid("Please select a category."),
+    name: z.string().trim().min(2, "Item name is required.").max(120),
+    description: z.string().trim().max(400).nullable().optional(),
+    price: z.number().min(0, "Price must be 0 or higher."),
+    discount_price: z.number().min(0).nullable().optional(),
+    stock_quantity: z.number().int().min(0).nullable().optional(),
+    image_url: z.string().trim().url().nullable().optional(),
+    image_urls: z.array(z.string().trim().url()).max(10).optional(),
+    is_veg: z.boolean().default(true),
+    is_available: z.boolean().default(true),
+    is_bestseller: z.boolean().default(false),
+    is_featured: z.boolean().default(false),
+    flavours: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+    egg_options: z.array(z.string().trim().min(1).max(30)).max(5).optional(),
+    allow_custom_message: z.boolean().default(false),
+    allow_custom_image: z.boolean().default(false),
+    sort_order: z.number().int().min(0).default(0),
+    variants: z.array(variantInputSchema).optional(),
+    addons: z.array(addonInputSchema).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.discount_price !== null &&
+      data.discount_price !== undefined &&
+      data.discount_price >= data.price
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["discount_price"],
+        message: "Offer/discount price must be lower than the base price.",
+      });
+    }
+  });
 
-const updateMenuItemSchema = z.strictObject({
-  id: z.string().uuid(),
-  category_id: z.string().uuid().optional(),
-  name: z.string().trim().min(2).max(120).optional(),
-  description: z.string().trim().max(400).nullable().optional(),
-  price: z.number().min(0).optional(),
-  image_url: z.string().trim().url().nullable().optional(),
-  is_veg: z.boolean().optional(),
-  is_available: z.boolean().optional(),
-  is_bestseller: z.boolean().optional(),
-  sort_order: z.number().int().min(0).optional(),
-  variants: z.array(variantInputSchema).optional(),
-  addons: z.array(addonInputSchema).optional(),
-});
+const updateMenuItemSchema = z
+  .strictObject({
+    id: z.string().uuid(),
+    category_id: z.string().uuid().optional(),
+    name: z.string().trim().min(2).max(120).optional(),
+    description: z.string().trim().max(400).nullable().optional(),
+    price: z.number().min(0).optional(),
+    discount_price: z.number().min(0).nullable().optional(),
+    stock_quantity: z.number().int().min(0).nullable().optional(),
+    image_url: z.string().trim().url().nullable().optional(),
+    image_urls: z.array(z.string().trim().url()).max(10).optional(),
+    is_veg: z.boolean().optional(),
+    is_available: z.boolean().optional(),
+    is_bestseller: z.boolean().optional(),
+    is_featured: z.boolean().optional(),
+    flavours: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+    egg_options: z.array(z.string().trim().min(1).max(30)).max(5).optional(),
+    allow_custom_message: z.boolean().optional(),
+    allow_custom_image: z.boolean().optional(),
+    sort_order: z.number().int().min(0).optional(),
+    variants: z.array(variantInputSchema).optional(),
+    addons: z.array(addonInputSchema).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.price !== undefined &&
+      data.discount_price !== null &&
+      data.discount_price !== undefined &&
+      data.discount_price >= data.price
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["discount_price"],
+        message: "Offer/discount price must be lower than the base price.",
+      });
+    }
+  });
+
+function resolveImageFields(
+  imageUrls?: string[],
+  imageUrl?: string | null
+): { image_url?: string | null; image_urls?: string[] } {
+  if (imageUrls !== undefined) {
+    const clean = imageUrls.filter(Boolean);
+    return {
+      image_urls: clean,
+      image_url: clean[0] ?? null,
+    };
+  }
+  if (imageUrl !== undefined) {
+    return {
+      image_url: imageUrl || null,
+      image_urls: imageUrl ? [imageUrl] : [],
+    };
+  }
+  return {};
+}
 
 export async function GET() {
   const session = await getAdminSession();
@@ -51,33 +121,18 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const [categoriesRes, itemsRes] = await Promise.all([
-    admin
-      .from("categories")
-      .select("id, name, sort_order, is_active")
-      .order("sort_order", { ascending: true }),
-    admin
-      .from("menu_items")
-      .select(
-        "id, category_id, name, description, price, image_url, is_veg, is_available, is_bestseller, sort_order, created_at, item_variants(id, item_id, label, price), item_addons(id, item_id, name, price, is_active)"
-      )
-      .order("sort_order", { ascending: true }),
-  ]);
+  const catalog = await fetchMenuCatalog(admin);
 
-  if (categoriesRes.error || itemsRes.error) {
-    return NextResponse.json(
-      {
-        error:
-          categoriesRes.error?.message ??
-          itemsRes.error?.message ??
-          "Failed to load menu.",
-      },
-      { status: 500 }
-    );
+  if (catalog.error) {
+    return NextResponse.json({ error: catalog.error }, { status: 500 });
   }
 
   return NextResponse.json(
-    { categories: categoriesRes.data ?? [], items: itemsRes.data ?? [] },
+    {
+      categories: catalog.categories,
+      items: catalog.items,
+      bakerySchemaReady: catalog.bakerySchemaReady,
+    },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
@@ -97,22 +152,36 @@ export async function POST(request: Request) {
     );
   }
 
-  const { variants, addons, ...itemFields } = parsed.data;
+  const { variants, addons, image_urls, image_url, ...itemFields } = parsed.data;
+  const resolvedImages = resolveImageFields(image_urls, image_url);
   const admin = createAdminClient();
+
+  const insertPayload = {
+    ...itemFields,
+    description: itemFields.description || null,
+    discount_price: itemFields.discount_price ?? null,
+    stock_quantity: itemFields.stock_quantity ?? null,
+    flavours: itemFields.flavours ?? [],
+    egg_options: itemFields.egg_options ?? [],
+    ...resolvedImages,
+  };
 
   const { data: created, error: insertError } = await admin
     .from("menu_items")
-    .insert({
-      ...itemFields,
-      description: itemFields.description || null,
-      image_url: itemFields.image_url || null,
-    })
-    .select(
-      "id, category_id, name, description, price, image_url, is_veg, is_available, is_bestseller, sort_order, created_at"
-    )
+    .insert(insertPayload)
+    .select("*")
     .single();
 
   if (insertError || !created) {
+    if (isMissingColumnError(insertError)) {
+      return NextResponse.json(
+        {
+          error:
+            "Please run supabase/bakery_upgrade.sql in your Supabase SQL Editor first to enable stock, discount, featured, multi-image, and bakery options.",
+        },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: insertError?.message ?? "Failed to create menu item." },
       { status: 500 }
@@ -140,7 +209,10 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ item: created }, { status: 201 });
+  return NextResponse.json(
+    { item: normalizeMenuItem(created as unknown as Record<string, unknown>) },
+    { status: 201 }
+  );
 }
 
 export async function PATCH(request: Request) {
@@ -158,7 +230,11 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const { id, variants, addons, ...itemFields } = parsed.data;
+  const { id, variants, addons, image_urls, image_url, ...restFields } =
+    parsed.data;
+  const resolvedImages = resolveImageFields(image_urls, image_url);
+  const itemFields = { ...restFields, ...resolvedImages };
+
   const admin = createAdminClient();
 
   if (Object.keys(itemFields).length > 0) {
@@ -168,6 +244,15 @@ export async function PATCH(request: Request) {
       .eq("id", id);
 
     if (updateError) {
+      if (isMissingColumnError(updateError)) {
+        return NextResponse.json(
+          {
+            error:
+              "Please run supabase/bakery_upgrade.sql in your Supabase SQL Editor first to save bakery columns.",
+          },
+          { status: 400 }
+        );
+      }
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
   }
@@ -219,7 +304,6 @@ export async function DELETE(request: Request) {
 
   const admin = createAdminClient();
 
-  // Check if this item is referenced in any past order_items
   const { data: pastOrderItem, error: orderCheckError } = await admin
     .from("order_items")
     .select("id")

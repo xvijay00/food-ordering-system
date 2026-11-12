@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   Bike,
+  CalendarClock,
   CheckCircle2,
   ChefHat,
   Clock,
@@ -48,6 +50,7 @@ export type PublicOrderSummary = {
   delivery_fee: number;
   total: number;
   notes: string | null;
+  preorder_at?: string | null;
   cancel_reason: string | null;
   created_at: string;
   restaurant_tables?: { id: string; table_number: number } | null;
@@ -336,6 +339,18 @@ export function OrderTracker({ token }: { token: string }) {
               timeStyle: "short",
             })}
           </p>
+          {order.preorder_at && (
+            <p className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+              <CalendarClock className="size-3.5" aria-hidden="true" />
+              <span>
+                Pre-order scheduled for{" "}
+                {new Date(order.preorder_at).toLocaleString("en-IN", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </span>
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -515,10 +530,38 @@ export function OrderTracker({ token }: { token: string }) {
                       {item.quantity}x {item.item_name}
                       {item.variant_label ? ` (${item.variant_label})` : ""}
                     </p>
+                    {(item.selected_flavour || item.egg_preference) && (
+                      <p className="text-xs text-muted-foreground">
+                        {[item.selected_flavour, item.egg_preference]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
                     {addons.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Add-ons: {addons.map((a) => a.name).join(", ")}
                       </p>
+                    )}
+                    {item.cake_message && (
+                      <p className="text-xs text-muted-foreground">
+                        Cake message: &ldquo;{item.cake_message}&rdquo;
+                      </p>
+                    )}
+                    {item.custom_image_url && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="relative size-10 overflow-hidden rounded-lg ring-1 ring-border">
+                          <Image
+                            src={item.custom_image_url}
+                            alt="Custom cake design"
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Custom cake design uploaded
+                        </span>
+                      </div>
                     )}
                   </div>
                   <p className="shrink-0 font-semibold tabular-nums">

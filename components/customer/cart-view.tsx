@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
@@ -98,7 +99,15 @@ export function CartView() {
 
                 {item.variantLabel && (
                   <p className="text-xs text-muted-foreground">
-                    Variant: {item.variantLabel}
+                    Size / Weight: {item.variantLabel}
+                  </p>
+                )}
+
+                {(item.selectedFlavour || item.eggPreference) && (
+                  <p className="text-xs text-muted-foreground">
+                    {[item.selectedFlavour, item.eggPreference]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 )}
 
@@ -106,6 +115,29 @@ export function CartView() {
                   <p className="text-xs text-muted-foreground">
                     Add-ons: {item.addons.map((a) => a.name).join(", ")}
                   </p>
+                )}
+
+                {item.cakeMessage && (
+                  <p className="text-xs text-muted-foreground">
+                    Cake message: &ldquo;{item.cakeMessage}&rdquo;
+                  </p>
+                )}
+
+                {item.customImageUrl && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="relative size-9 overflow-hidden rounded-lg ring-1 ring-border">
+                      <Image
+                        src={item.customImageUrl}
+                        alt="Custom cake design"
+                        fill
+                        sizes="36px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Custom cake image attached
+                    </span>
+                  </div>
                 )}
 
                 <p className="text-xs font-medium text-muted-foreground">

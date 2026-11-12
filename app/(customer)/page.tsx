@@ -1,7 +1,14 @@
 import { Suspense } from "react";
 
+import { FeaturedProducts } from "@/components/customer/featured-products";
 import { LandingHero } from "@/components/customer/landing-hero";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchMenuCatalog } from "@/lib/bakery-queries";
+import { createAdminClient } from "@/lib/supabase-admin";
+import { createClient } from "@/lib/supabase-server";
+import type { MenuItemWithRelations } from "@/types/database";
+
+export const dynamic = "force-dynamic";
 
 function LandingSkeleton() {
   return (
@@ -21,11 +28,51 @@ function LandingSkeleton() {
   );
 }
 
-export default function CustomerLandingPage() {
+export default async function CustomerLandingPage() {
+  let featuredItems: MenuItemWithRelations[] = [];
+  let shopOpen = true;
+
+  try {
+    const supabase = await createClient();
+    const catalog = await fetchMenuCatalog(supabase, {
+      activeCategoriesOnly: true,
+    });
+    const activeCategoryIds = new Set(catalog.categories.map((c) => c.id));
+    featuredItems = catalog.items.filter(
+      (item) =>
+        item.is_featured &&
+        item.is_available &&
+        activeCategoryIds.has(item.category_id)
+    );
+
+    try {
+      const admin = createAdminClient();
+      const { data: settingRow } = await admin
+        .from("settings")
+        .select("value")
+        .eq("key", "shop_open")
+        .maybeSingle();
+
+      if (settingRow) {
+        if (typeof settingRow.value === "boolean") {
+          shopOpen = settingRow.value;
+        } else if (settingRow.value === "false") {
+          shopOpen = false;
+        }
+      }
+    } catch {
+      // Default to shopOpen=true
+    }
+  } catch {
+    featuredItems = [];
+  }
+
   return (
-    <Suspense fallback={<LandingSkeleton />}>
-      <LandingHero />
-    </Suspense>
+    <>
+      <Suspense fallback={<LandingSkeleton />}>
+        <LandingHero />
+      </Suspense>
+      <FeaturedProducts items={featuredItems} shopOpen={shopOpen} />
+    </>
   );
 }
-

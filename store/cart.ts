@@ -12,6 +12,10 @@ export type CartItem = {
   variantId?: string | null;
   variantLabel?: string | null;
   addons: OrderItemAddon[];
+  selectedFlavour?: string | null;
+  eggPreference?: string | null;
+  cakeMessage?: string | null;
+  customImageUrl?: string | null;
   unitPrice: number;
   quantity: number;
 };
@@ -25,6 +29,10 @@ export type AddCartItemInput = {
   variantId?: string | null;
   variantLabel?: string | null;
   addons?: OrderItemAddon[];
+  selectedFlavour?: string | null;
+  eggPreference?: string | null;
+  cakeMessage?: string | null;
+  customImageUrl?: string | null;
   unitPrice: number;
   quantity?: number;
 };
@@ -52,13 +60,25 @@ export type CartState = {
 export function buildCartItemId(
   menuItemId: string,
   variantKey?: string | null,
-  addons: OrderItemAddon[] = []
+  addons: OrderItemAddon[] = [],
+  bakeryKey?: {
+    selectedFlavour?: string | null;
+    eggPreference?: string | null;
+    cakeMessage?: string | null;
+    customImageUrl?: string | null;
+  }
 ): string {
   const addonKey = [...addons]
     .map((addon) => addon.id ?? addon.name)
     .sort()
     .join(",");
-  return `${menuItemId}::${variantKey ?? ""}::${addonKey}`;
+  const customParts = [
+    bakeryKey?.selectedFlavour?.trim() ?? "",
+    bakeryKey?.eggPreference?.trim() ?? "",
+    bakeryKey?.cakeMessage?.trim() ?? "",
+    bakeryKey?.customImageUrl?.trim() ?? "",
+  ].join("::");
+  return `${menuItemId}::${variantKey ?? ""}::${addonKey}::${customParts}`;
 }
 
 export function calculateCartItemCount(items: CartItem[]): number {
@@ -113,7 +133,13 @@ export const useCartStore = create<CartState>()(
             buildCartItemId(
               input.menuItemId,
               input.variantId ?? input.variantLabel,
-              addons
+              addons,
+              {
+                selectedFlavour: input.selectedFlavour,
+                eggPreference: input.eggPreference,
+                cakeMessage: input.cakeMessage,
+                customImageUrl: input.customImageUrl,
+              }
             );
 
           const existing = state.items.find((item) => item.id === id);
@@ -136,6 +162,10 @@ export const useCartStore = create<CartState>()(
             variantId: input.variantId ?? null,
             variantLabel: input.variantLabel ?? null,
             addons,
+            selectedFlavour: input.selectedFlavour ?? null,
+            eggPreference: input.eggPreference ?? null,
+            cakeMessage: input.cakeMessage ?? null,
+            customImageUrl: input.customImageUrl ?? null,
             unitPrice: input.unitPrice,
             quantity: quantityToAdd,
           };

@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
   Bike,
+  CalendarClock,
   Clock,
+  ExternalLink,
   MapPin,
   Phone,
   Printer,
@@ -183,7 +186,91 @@ export function OrderDetailBill({
                   <p className="text-xs text-muted-foreground">Order Token</p>
                   <p className="font-mono text-xs">{order.order_token}</p>
                 </div>
+
+                {order.preorder_at && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-muted-foreground">
+                      Scheduled Pre-order Time
+                    </p>
+                    <p className="mt-0.5 inline-flex items-center gap-1.5 font-semibold text-primary">
+                      <CalendarClock className="size-3.5" aria-hidden="true" />
+                      <span>{formatDateTime(order.preorder_at)}</span>
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {items.some(
+                (item) =>
+                  item.selected_flavour ||
+                  item.egg_preference ||
+                  item.cake_message ||
+                  item.custom_image_url
+              ) && (
+                <div className="space-y-2.5 rounded-xl border border-border/70 p-3.5">
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Bakery Customizations
+                  </p>
+                  <ul className="space-y-2.5 text-xs">
+                    {items
+                      .filter(
+                        (item) =>
+                          item.selected_flavour ||
+                          item.egg_preference ||
+                          item.cake_message ||
+                          item.custom_image_url
+                      )
+                      .map((item) => (
+                        <li
+                          key={item.id}
+                          className="space-y-1 border-b border-border/50 pb-2 last:border-b-0 last:pb-0"
+                        >
+                          <p className="font-semibold">
+                            {item.quantity}x {item.item_name}
+                            {item.variant_label ? ` (${item.variant_label})` : ""}
+                          </p>
+                          {(item.selected_flavour || item.egg_preference) && (
+                            <p className="text-muted-foreground">
+                              {[item.selected_flavour, item.egg_preference]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </p>
+                          )}
+                          {item.cake_message && (
+                            <p className="font-medium text-amber-800 dark:text-amber-300">
+                              Cake message: &ldquo;{item.cake_message}&rdquo;
+                            </p>
+                          )}
+                          {item.custom_image_url && (
+                            <div className="flex items-center gap-2.5 pt-1">
+                              <div className="relative size-14 overflow-hidden rounded-lg ring-1 ring-border">
+                                <Image
+                                  src={item.custom_image_url}
+                                  alt="Custom cake design reference"
+                                  fill
+                                  sizes="56px"
+                                  className="object-cover"
+                                />
+                              </div>
+                              <a
+                                href={item.custom_image_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                              >
+                                <ExternalLink
+                                  className="size-3.5"
+                                  aria-hidden="true"
+                                />
+                                <span>Open full cake design</span>
+                              </a>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
 
               {order.notes && (
                 <div className="rounded-xl bg-amber-500/10 p-3 text-xs font-medium text-amber-950 dark:text-amber-200">
@@ -313,6 +400,12 @@ export function OrderDetailBill({
                 <span>Payment:</span>
                 <span>{formatPaymentMethod(order.payment_method)}</span>
               </div>
+              {order.preorder_at && (
+                <div className="flex justify-between gap-2 font-semibold">
+                  <span>Pre-order:</span>
+                  <span>{formatDateTime(order.preorder_at)}</span>
+                </div>
+              )}
             </div>
 
             {(order.order_type === "delivery" ||
@@ -365,9 +458,21 @@ export function OrderDetailBill({
                           {item.item_name}
                           {item.variant_label ? ` (${item.variant_label})` : ""}
                         </p>
+                        {(item.selected_flavour || item.egg_preference) && (
+                          <p className="text-[10px] text-zinc-700">
+                            {[item.selected_flavour, item.egg_preference]
+                              .filter(Boolean)
+                              .join(" / ")}
+                          </p>
+                        )}
                         {addons.length > 0 && (
                           <p className="text-[10px] text-zinc-700">
                             + {addons.map((a) => a.name).join(", ")}
+                          </p>
+                        )}
+                        {item.cake_message && (
+                          <p className="text-[10px] text-zinc-800">
+                            Msg: &ldquo;{item.cake_message}&rdquo;
                           </p>
                         )}
                       </td>
