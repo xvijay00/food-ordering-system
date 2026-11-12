@@ -1,4 +1,4 @@
-export const RESTAURANT_NAME = "Saffron & Ember";
+export const RESTAURANT_NAME = "Chilli Bistro";
 
 export const RESTAURANT_TAGLINE =
   "Wood-fired tandoori classics and slow-simmered curries, fresh to your table or doorstep.";
