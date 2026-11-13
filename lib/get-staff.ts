@@ -29,22 +29,20 @@ export async function getStaff(): Promise<StaffProfile | null> {
       // Fall through to admin client fallback
     }
 
-    // 2. Fallback to admin client if service role key is configured
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      try {
-        const admin = createAdminClient();
-        const { data: adminStaff, error: adminStaffError } = await admin
-          .from("staff_profiles")
-          .select("id, name, role")
-          .eq("id", user.id)
-          .maybeSingle();
+    // 2. Fallback to admin client
+    try {
+      const admin = createAdminClient();
+      const { data: adminStaff, error: adminStaffError } = await admin
+        .from("staff_profiles")
+        .select("id, name, role")
+        .eq("id", user.id)
+        .maybeSingle();
 
-        if (!adminStaffError && adminStaff) {
-          return adminStaff;
-        }
-      } catch {
-        // Fallback failed
+      if (!adminStaffError && adminStaff) {
+        return adminStaff;
       }
+    } catch {
+      // Fallback failed
     }
 
     return null;
