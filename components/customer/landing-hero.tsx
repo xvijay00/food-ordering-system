@@ -79,7 +79,7 @@ export function LandingHero() {
               className="size-3.5 text-amber-600 dark:text-amber-400"
               aria-hidden="true"
             />
-            <span>Freshly Prepared to Order</span>
+            <span>Freshly Baked Daily</span>
           </Badge>
 
           <h1 className="hero-fade-up hero-delay-1 font-heading text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">

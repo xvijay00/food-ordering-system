@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { PwaInstaller } from "@/components/pwa-installer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { RESTAURANT_CONFIG } from "@/lib/config";
@@ -20,13 +21,15 @@ export const metadata: Metadata = {
   title: RESTAURANT_CONFIG.name,
   description: RESTAURANT_CONFIG.tagline,
   applicationName: RESTAURANT_CONFIG.name,
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: RESTAURANT_CONFIG.name,
   },
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
@@ -68,6 +71,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <PwaInstaller />
           <Toaster />
         </ThemeProvider>
       </body>

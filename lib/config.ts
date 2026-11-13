@@ -1,7 +1,7 @@
-export const RESTAURANT_NAME = "Bakers Nation";
+export const RESTAURANT_NAME = "Baker's Nation";
 
 export const RESTAURANT_TAGLINE =
-  "Wood-fired tandoori classics and slow-simmered curries, fresh to your table or doorstep.";
+  "Freshly baked artisan cakes, pastries, pizza, and breads delivered to your doorstep.";
 
 export const RESTAURANT_PHONE = "+919876543210";
 

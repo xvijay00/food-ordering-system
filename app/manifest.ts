@@ -4,6 +4,7 @@ import { RESTAURANT_CONFIG } from "@/lib/config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: RESTAURANT_CONFIG.name,
     short_name: RESTAURANT_CONFIG.name,
     description: RESTAURANT_CONFIG.tagline,
@@ -13,13 +14,19 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     background_color: "#4e1c01",
     theme_color: "#4e1c01",
-    categories: ["food", "restaurant"],
+    categories: ["food", "shopping", "lifestyle"],
     icons: [
       {
         src: "/icons/icon-192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
+      },
+      {
+        src: "/icons/icon-maskable-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
       },
       {
         src: "/icons/icon-512.png",

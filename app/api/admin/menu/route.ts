@@ -304,37 +304,14 @@ export async function DELETE(request: Request) {
 
   const admin = createAdminClient();
 
-  const { data: pastOrderItem, error: orderCheckError } = await admin
+  // Safely unhook foreign key in past order_items so order history remains intact
+  await admin
     .from("order_items")
-    .select("id")
-    .eq("menu_item_id", parsedId.data)
-    .limit(1)
-    .maybeSingle();
+    .update({ menu_item_id: null })
+    .eq("menu_item_id", parsedId.data);
 
-  if (orderCheckError) {
-    return NextResponse.json(
-      { error: orderCheckError.message },
-      { status: 500 }
-    );
-  }
-
-  if (pastOrderItem) {
-    const { error: markError } = await admin
-      .from("menu_items")
-      .update({ is_available: false })
-      .eq("id", parsedId.data);
-
-    if (markError) {
-      return NextResponse.json({ error: markError.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      deleted: false,
-      markedUnavailable: true,
-      message:
-        "This item appears in past orders, so it was marked unavailable instead of deleted to preserve order history.",
-    });
-  }
+  await admin.from("item_variants").delete().eq("item_id", parsedId.data);
+  await admin.from("item_addons").delete().eq("item_id", parsedId.data);
 
   const { error } = await admin
     .from("menu_items")
@@ -348,6 +325,6 @@ export async function DELETE(request: Request) {
   return NextResponse.json({
     deleted: true,
     markedUnavailable: false,
-    message: "Item deleted from menu.",
+    message: "Product deleted successfully.",
   });
 }

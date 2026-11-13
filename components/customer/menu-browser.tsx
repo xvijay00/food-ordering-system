@@ -257,11 +257,15 @@ export function MenuBrowser({
       {/* Category Sections */}
       {visibleSections.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-10 text-center">
-          <p className="font-medium text-foreground">No dishes match your filter</p>
+          <p className="font-medium text-foreground">
+            {menuItems.length === 0
+              ? "Menu is being updated"
+              : "No bakery items match your filter"}
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {menuItems.length === 0
-              ? "No menu items were returned from the database yet."
-              : "Try clearing the search input or resetting the dietary toggle."}
+              ? "Freshly baked cakes, pastries, pizzas, and breads are being added. Check back shortly!"
+              : "Try clearing your search input or resetting the filter."}
           </p>
         </div>
       ) : (

@@ -991,8 +991,27 @@ export function MenuManager({
 
       {/* Grouped Items by Category */}
       {groupedSections.length === 0 ? (
-        <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-          No bakery products match your search or filter.
+        <div className="rounded-2xl border border-dashed p-10 text-center">
+          <p className="font-heading text-base font-bold text-foreground">
+            {items.length === 0
+              ? "No bakery products added yet"
+              : "No bakery products match your search or filter"}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {items.length === 0
+              ? "All old items have been cleared. Click below to add your fresh cakes, pastries, pizzas, and breads."
+              : "Try clearing your search query or switching category filter."}
+          </p>
+          {items.length === 0 && (
+            <Button
+              type="button"
+              onClick={openNewItem}
+              className="mt-4 min-h-10 gap-2 rounded-xl"
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              <span>Add Your First Product</span>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
