@@ -9,5 +9,10 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://wmkclatrhlsqktvgklyc.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_7MYuxGt9jDGR49tQmwKGig_jB0zqWPh"
   }
 }
+

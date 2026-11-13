@@ -27,6 +27,14 @@ const withSerwist = withSerwistInit({
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      "https://wmkclatrhlsqktvgklyc.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      "sb_publishable_7MYuxGt9jDGR49tQmwKGig_jB0zqWPh",
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },
