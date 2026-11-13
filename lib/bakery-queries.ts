@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isBirthdayCategory } from "@/lib/bakery-constants";
 import type {
   Category,
   Database,
@@ -129,9 +130,47 @@ export function normalizeOrder(raw: Record<string, unknown>): OrderWithItems {
   };
 }
 
+function filterCatalogByScope(
+  categories: Category[],
+  items: MenuItemWithRelations[],
+  scope: "all" | "bakery" | "birthday" = "all"
+): { categories: Category[]; items: MenuItemWithRelations[] } {
+  if (scope === "all") {
+    return { categories, items };
+  }
+
+  const isCatBirthday = (cat: Category) =>
+    Boolean((cat as unknown as { is_birthday?: boolean }).is_birthday) ||
+    isBirthdayCategory(cat.name);
+
+  if (scope === "birthday") {
+    const birthdayCats = categories.filter(isCatBirthday);
+    const birthdayCatIds = new Set(birthdayCats.map((c) => c.id));
+    const birthdayItems = items.filter(
+      (item) =>
+        birthdayCatIds.has(item.category_id) ||
+        Boolean((item as unknown as { is_birthday?: boolean }).is_birthday)
+    );
+    return { categories: birthdayCats, items: birthdayItems };
+  }
+
+  // scope === "bakery"
+  const bakeryCats = categories.filter((c) => !isCatBirthday(c));
+  const bakeryCatIds = new Set(bakeryCats.map((c) => c.id));
+  const bakeryItems = items.filter(
+    (item) =>
+      bakeryCatIds.has(item.category_id) &&
+      !Boolean((item as unknown as { is_birthday?: boolean }).is_birthday)
+  );
+  return { categories: bakeryCats, items: bakeryItems };
+}
+
 export async function fetchMenuCatalog(
   client: SupabaseClient<Database>,
-  options: { activeCategoriesOnly?: boolean } = {}
+  options: {
+    activeCategoriesOnly?: boolean;
+    scope?: "all" | "bakery" | "birthday";
+  } = {}
 ): Promise<{
   categories: Category[];
   items: MenuItemWithRelations[];
@@ -165,11 +204,19 @@ export async function fetchMenuCatalog(
   }
 
   if (!extendedItemsRes.error) {
+    const normalizedItems = (
+      (extendedItemsRes.data ?? []) as unknown as Record<string, unknown>[]
+    ).map(normalizeMenuItem);
+
+    const filtered = filterCatalogByScope(
+      categoriesRes.data ?? [],
+      normalizedItems,
+      options.scope ?? "all"
+    );
+
     return {
-      categories: categoriesRes.data ?? [],
-      items: ((extendedItemsRes.data ?? []) as unknown as Record<string, unknown>[]).map(
-        normalizeMenuItem
-      ),
+      categories: filtered.categories,
+      items: filtered.items,
       bakerySchemaReady: true,
       error: null,
     };
@@ -198,14 +245,37 @@ export async function fetchMenuCatalog(
     };
   }
 
+  const normalizedBaseItems = (
+    (baseItemsRes.data ?? []) as unknown as Record<string, unknown>[]
+  ).map(normalizeMenuItem);
+
+  const filtered = filterCatalogByScope(
+    categoriesRes.data ?? [],
+    normalizedBaseItems,
+    options.scope ?? "all"
+  );
+
   return {
-    categories: categoriesRes.data ?? [],
-    items: ((baseItemsRes.data ?? []) as unknown as Record<string, unknown>[]).map(
-      normalizeMenuItem
-    ),
+    categories: filtered.categories,
+    items: filtered.items,
     bakerySchemaReady: false,
     error: null,
   };
+}
+
+export async function fetchBirthdayCatalog(
+  client: SupabaseClient<Database>,
+  options: { activeCategoriesOnly?: boolean } = {}
+): Promise<{
+  categories: Category[];
+  items: MenuItemWithRelations[];
+  bakerySchemaReady: boolean;
+  error: string | null;
+}> {
+  return fetchMenuCatalog(client, {
+    activeCategoriesOnly: options.activeCategoriesOnly ?? true,
+    scope: "birthday",
+  });
 }
 
 export async function fetchAdminOrdersList(

@@ -5,6 +5,34 @@ export const BAKERY_CATEGORY_PRESETS = [
   "Bread",
 ] as const;
 
+export const BIRTHDAY_CATEGORY_PRESETS = [
+  "Birthday Cakes",
+  "Balloons",
+  "Birthday Candles",
+  "Birthday Caps",
+  "Birthday Banners",
+  "Party Decorations",
+  "Cake Accessories",
+  "Birthday Gift Items",
+] as const;
+
+export const BIRTHDAY_CATEGORY_NAMES = new Set(
+  BIRTHDAY_CATEGORY_PRESETS.map((name) => name.toLowerCase())
+);
+
+export function isBirthdayCategory(name?: string | null): boolean {
+  if (!name) return false;
+  const lower = name.toLowerCase().trim();
+  return (
+    BIRTHDAY_CATEGORY_NAMES.has(lower) ||
+    lower.includes("birthday") ||
+    lower.includes("balloon") ||
+    lower.includes("party decoration") ||
+    lower.includes("candle") ||
+    lower.includes("banner")
+  );
+}
+
 export const BAKERY_FLAVOUR_PRESETS = [
   "Chocolate",
   "Vanilla",

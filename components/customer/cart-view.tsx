@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import { VegIndicator } from "@/components/customer/veg-indicator";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,6 +97,17 @@ export function CartView() {
                     {item.name}
                   </h2>
                 </div>
+
+                {item.isBirthdayPackage && (
+                  <div className="pt-0.5">
+                    <Badge
+                      variant="secondary"
+                      className="gap-1 border-primary/20 bg-primary/10 text-xs font-bold text-primary"
+                    >
+                      🎉 Birthday Package Item
+                    </Badge>
+                  </div>
+                )}
 
                 {item.variantLabel && (
                   <p className="text-sm font-semibold text-foreground/85">

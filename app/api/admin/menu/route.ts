@@ -114,14 +114,21 @@ function resolveImageFields(
   return {};
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 
+  const url = new URL(request.url);
+  const scopeParam = url.searchParams.get("scope");
+  const scope =
+    scopeParam === "birthday" || scopeParam === "bakery"
+      ? scopeParam
+      : "all";
+
   const admin = createAdminClient();
-  const catalog = await fetchMenuCatalog(admin);
+  const catalog = await fetchMenuCatalog(admin, { scope });
 
   if (catalog.error) {
     return NextResponse.json({ error: catalog.error }, { status: 500 });

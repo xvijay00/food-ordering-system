@@ -20,7 +20,7 @@ export function BottomNav() {
       aria-label="Mobile customer navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md md:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-3 gap-1 px-3">
+      <ul className="mx-auto grid max-w-md grid-cols-4 gap-1 px-2">
         {CUSTOMER_NAV_ITEMS.map(({ href, label, icon: Icon, isCart }) => {
           const isActive = pathname === href;
           const badgeText = itemCount > 99 ? "99+" : itemCount;

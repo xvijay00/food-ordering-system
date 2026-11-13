@@ -16,6 +16,7 @@ export default async function MenuPage() {
     const supabase = await createClient();
     const catalog = await fetchMenuCatalog(supabase, {
       activeCategoriesOnly: true,
+      scope: "bakery",
     });
 
     if (catalog.error) {

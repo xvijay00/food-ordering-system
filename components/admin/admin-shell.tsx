@@ -10,6 +10,7 @@ import {
   ExternalLink,
   LogOut,
   Settings,
+  Sparkles,
   Users,
   UtensilsCrossed,
 } from "lucide-react";
@@ -41,6 +42,12 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     href: "/admin/menu",
     label: "Menu",
     icon: UtensilsCrossed,
+    roles: ["admin"],
+  },
+  {
+    href: "/admin/birthday",
+    label: "Birthday",
+    icon: Sparkles,
     roles: ["admin"],
   },
   {

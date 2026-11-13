@@ -18,6 +18,8 @@ export type CartItem = {
   customImageUrl?: string | null;
   unitPrice: number;
   quantity: number;
+  isBirthdayPackage?: boolean;
+  birthdayCategory?: string | null;
 };
 
 export type AddCartItemInput = {
@@ -35,6 +37,8 @@ export type AddCartItemInput = {
   customImageUrl?: string | null;
   unitPrice: number;
   quantity?: number;
+  isBirthdayPackage?: boolean;
+  birthdayCategory?: string | null;
 };
 
 export type CartState = {
@@ -98,6 +102,22 @@ export function calculateCartTotal(
   if (subtotal === 0) return 0;
   const appliedFee = orderType === "delivery" ? deliveryFee : 0;
   return subtotal + appliedFee;
+}
+
+export function calculateBirthdayPackageItemCount(
+  items: { quantity: number }[]
+): number {
+  return items.reduce((sum, item) => sum + Math.max(0, item.quantity), 0);
+}
+
+export function calculateBirthdayPackageSubtotal(
+  items: { unitPrice: number; quantity: number }[]
+): number {
+  return items.reduce(
+    (sum, item) =>
+      Number((sum + item.unitPrice * Math.max(0, item.quantity)).toFixed(2)),
+    0
+  );
 }
 
 export const useCartStore = create<CartState>()(
@@ -168,6 +188,8 @@ export const useCartStore = create<CartState>()(
             customImageUrl: input.customImageUrl ?? null,
             unitPrice: input.unitPrice,
             quantity: quantityToAdd,
+            isBirthdayPackage: Boolean(input.isBirthdayPackage),
+            birthdayCategory: input.birthdayCategory ?? null,
           };
 
           return { items: [...state.items, newItem] };
