@@ -11,3 +11,4 @@ TRUNCATE TABLE public.orders RESTART IDENTITY CASCADE;
 
 -- Verification query (should return 0 rows):
 SELECT count(*) as total_orders FROM public.orders;
+

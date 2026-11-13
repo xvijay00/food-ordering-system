@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import {
   BookUser,
+  Camera,
   CheckCircle2,
   Clock,
   Download,
@@ -579,6 +580,17 @@ export function ClientRecordsView({
                                     <Badge variant="outline" className="gap-1 text-[11px]">
                                       <span>🥚 {item.egg_preference}</span>
                                     </Badge>
+                                  )}
+                                  {item.custom_image_url && (
+                                    <a
+                                      href={item.custom_image_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:underline"
+                                    >
+                                      <Camera className="size-3" />
+                                      <span>Custom Cake Photo ↗</span>
+                                    </a>
                                   )}
                                   {item.cake_message && (
                                     <span className="italic text-primary">

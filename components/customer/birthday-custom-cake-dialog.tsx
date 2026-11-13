@@ -4,14 +4,15 @@ import * as React from "react";
 import Image from "next/image";
 import {
   Calendar,
+  Camera,
   Check,
   Egg,
-  ImagePlus,
   Loader2,
   Minus,
   PartyPopper,
   Plus,
   Sparkles,
+  UploadCloud,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   BAKERY_EGG_OPTIONS,
   BAKERY_FLAVOUR_PRESETS,
@@ -41,12 +43,14 @@ import type { MenuItemWithRelations } from "@/types/database";
 
 export type BirthdayCakeCustomizationResult = {
   item: MenuItemWithRelations;
+  variantId?: string | null;
   variantLabel: string;
   unitPrice: number;
   selectedFlavour: string;
   eggPreference: string;
   cakeMessage: string;
   customImageUrl: string | null;
+  specialInstructions?: string | null;
   preorderAt?: string;
   quantity: number;
 };
@@ -89,6 +93,7 @@ export function BirthdayCustomCakeDialog({
   const [selectedFlavour, setSelectedFlavour] = React.useState<string>("");
   const [eggPreference, setEggPreference] = React.useState<string>("");
   const [cakeMessage, setCakeMessage] = React.useState<string>("");
+  const [specialInstructions, setSpecialInstructions] = React.useState<string>("");
   const [customImageUrl, setCustomImageUrl] = React.useState<string | null>(null);
   const [preorderAt, setPreorderAt] = React.useState<string>("");
   const [quantity, setQuantity] = React.useState<number>(1);
@@ -104,9 +109,10 @@ export function BirthdayCustomCakeDialog({
       setSelectedVariantId("");
       setSelectedPresetSize("0.5kg");
     }
-    setSelectedFlavour(availableFlavours[0] ?? "Chocolate");
-    setEggPreference(availableEggOptions[0] ?? "Eggless");
+    setSelectedFlavour(availableFlavours[0] ?? "Belgian Chocolate Truffle");
+    setEggPreference(availableEggOptions[0] ?? "100% Eggless");
     setCakeMessage("");
+    setSpecialInstructions("");
     setCustomImageUrl(null);
     setPreorderAt("");
     setQuantity(1);
@@ -180,12 +186,14 @@ export function BirthdayCustomCakeDialog({
   const handleConfirm = () => {
     onAddCakeToPackage({
       item,
+      variantId: selectedVariantId || null,
       variantLabel: activeSizeLabel,
       unitPrice: calculatedUnitPrice,
       selectedFlavour,
       eggPreference,
       cakeMessage: cakeMessage.trim(),
       customImageUrl,
+      specialInstructions: specialInstructions.trim() || undefined,
       preorderAt: preorderAt.trim() || undefined,
       quantity,
     });
@@ -217,31 +225,110 @@ export function BirthdayCustomCakeDialog({
 
         <div className="space-y-5 py-2">
           {/* Main Visual Preview */}
-          {images.length > 0 && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/70 bg-muted">
+          {(customImageUrl || images.length > 0) && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/70 bg-muted shadow-sm">
               <Image
-                src={images[0]}
+                src={customImageUrl || images[0]}
                 alt={item.name}
                 fill
                 sizes="(max-width: 640px) 100vw, 550px"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
-                <span className="font-heading text-lg font-black drop-shadow-sm">
+                <span className="font-heading text-lg font-black drop-shadow-md">
                   {formatPrice(calculatedUnitPrice)}
                 </span>
-                <span className="text-xs font-semibold drop-shadow-sm">
-                  Size: {activeSizeLabel}
+                <span className="inline-flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-0.5 text-xs font-bold backdrop-blur-xs">
+                  {customImageUrl ? "📸 Custom Photo Attached" : `Size: ${activeSizeLabel}`}
                 </span>
               </div>
             </div>
           )}
 
-          {/* 1. Cake Size / Weight Selection */}
+          {/* 1. Upload Custom Cake Reference Photo */}
+          <div className="space-y-2 rounded-2xl border-2 border-dashed border-primary/40 bg-gradient-to-br from-primary/5 via-amber-500/5 to-transparent p-4">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-primary">
+                <Camera className="size-4" />
+                <span>1. Upload Custom Cake Photo (Pinterest / Gallery)</span>
+              </label>
+              {customImageUrl && (
+                <Badge className="bg-emerald-600 text-[10px] text-white">
+                  Attached ✓
+                </Badge>
+              )}
+            </div>
+
+            {customImageUrl ? (
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-xs">
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border">
+                  <Image
+                    src={customImageUrl}
+                    alt="Custom cake reference design"
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-foreground">
+                    Custom cake design photo attached!
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Our chef will match this exact decoration and theme.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCustomImageUrl(null)}
+                  className="size-8 text-destructive hover:bg-destructive/10"
+                  title="Remove reference photo"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-primary/30 bg-card/60 p-4 text-center transition-all hover:border-primary hover:bg-primary/5">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={uploadingPhoto}
+                  className="hidden"
+                />
+                {uploadingPhoto ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 className="size-5 animate-spin text-primary" />
+                    <span className="text-xs font-bold text-muted-foreground">
+                      Compressing and uploading photo...
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <UploadCloud className="size-5" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-foreground">
+                        Tap here to select cake photo
+                      </span>
+                      <p className="text-[11px] text-muted-foreground">
+                        Upload design screenshot from Pinterest, Instagram, or phone camera
+                      </p>
+                    </div>
+                  </>
+                )}
+              </label>
+            )}
+          </div>
+
+          {/* 2. Cake Size / Weight Selection */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              1. Choose Cake Size / Weight *
+              2. Choose Cake Size / Weight *
             </label>
             {hasVariants && item.item_variants ? (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -296,10 +383,10 @@ export function BirthdayCustomCakeDialog({
             )}
           </div>
 
-          {/* 2. Flavour Selection */}
+          {/* 3. Flavour Selection */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              2. Select Cake Flavour *
+              3. Select Cake Flavour *
             </label>
             <div className="flex flex-wrap gap-2">
               {availableFlavours.map((flavour) => {
@@ -323,10 +410,10 @@ export function BirthdayCustomCakeDialog({
             </div>
           </div>
 
-          {/* 3. Egg Preference */}
+          {/* 4. Egg Preference */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              3. Egg Preference *
+              4. Egg Preference *
             </label>
             <div className="grid grid-cols-2 gap-2">
               {availableEggOptions.map((opt) => {
@@ -357,14 +444,14 @@ export function BirthdayCustomCakeDialog({
             </div>
           </div>
 
-          {/* 4. Birthday Message On Cake */}
+          {/* 5. Birthday Message On Cake */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label
                 htmlFor="birthday-cake-message"
                 className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
               >
-                4. Message On Cake (Optional)
+                5. Message On Cake (Optional)
               </label>
               <span className="text-[11px] text-muted-foreground">
                 {cakeMessage.length}/45 chars
@@ -372,7 +459,7 @@ export function BirthdayCustomCakeDialog({
             </div>
             <Input
               id="birthday-cake-message"
-              placeholder='e.g. "Happy 25th Birthday Rhea! 💖"'
+              placeholder='e.g. "Happy 10th Birthday Aarav! 💖"'
               value={cakeMessage}
               maxLength={45}
               onChange={(e) => setCakeMessage(e.target.value)}
@@ -380,14 +467,31 @@ export function BirthdayCustomCakeDialog({
             />
           </div>
 
-          {/* 5. Preorder / Delivery Date & Time */}
+          {/* 6. Special Chef Instructions / Theme Notes */}
+          <div className="space-y-2">
+            <label
+              htmlFor="birthday-special-instructions"
+              className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+            >
+              6. Special Chef Instructions / Theme Details (Optional)
+            </label>
+            <Textarea
+              id="birthday-special-instructions"
+              placeholder='e.g. "2 tiers, pastel pink color cream, Spiderman sugar topper, less sweet"'
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              className="min-h-16 rounded-xl text-xs font-medium"
+            />
+          </div>
+
+          {/* 7. Preorder / Delivery Date & Time */}
           <div className="space-y-2">
             <label
               htmlFor="birthday-cake-preorder"
               className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground"
             >
               <Calendar className="size-3.5" />
-              5. Preferred Celebration Date & Time (Optional)
+              7. Preferred Celebration Date & Time (Optional)
             </label>
             <Input
               id="birthday-cake-preorder"
@@ -401,69 +505,7 @@ export function BirthdayCustomCakeDialog({
             </p>
           </div>
 
-          {/* 6. Upload Inspiration / Reference Photo */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              6. Inspiration / Custom Design Photo (Optional)
-            </label>
-            {customImageUrl ? (
-              <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-muted/40 p-2.5">
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-border">
-                  <Image
-                    src={customImageUrl}
-                    alt="Cake reference design"
-                    fill
-                    sizes="56px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-foreground">
-                    Custom cake design photo attached
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Our chef will match this decorative style.
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setCustomImageUrl(null)}
-                  className="size-8 text-destructive hover:bg-destructive/10"
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-            ) : (
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 bg-card p-3.5 text-center transition-colors hover:bg-muted/50">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  disabled={uploadingPhoto}
-                  className="hidden"
-                />
-                {uploadingPhoto ? (
-                  <>
-                    <Loader2 className="size-4.5 animate-spin text-primary" />
-                    <span className="text-xs font-bold text-muted-foreground">
-                      Compressing & uploading reference image...
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <ImagePlus className="size-4.5 text-primary" />
-                    <span className="text-xs font-bold text-foreground sm:text-sm">
-                      Upload Custom Cake Inspiration Photo
-                    </span>
-                  </>
-                )}
-              </label>
-            )}
-          </div>
-
-          {/* 7. Quantity Stepper */}
+          {/* 8. Quantity Stepper */}
           <div className="flex items-center justify-between rounded-xl border border-border/80 bg-muted/30 p-3">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Quantity

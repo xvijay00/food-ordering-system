@@ -7,6 +7,7 @@ import {
   AlertCircle,
   ArrowRight,
   Cake,
+  Camera,
   Check,
   Gift,
   Minus,
@@ -59,11 +60,13 @@ export type PackageBuilderItem = {
   originalPrice: number;
   quantity: number;
   isVeg?: boolean;
+  variantId?: string | null;
   variantLabel?: string | null;
   selectedFlavour?: string | null;
   eggPreference?: string | null;
   cakeMessage?: string | null;
   customImageUrl?: string | null;
+  specialInstructions?: string | null;
   preorderAt?: string | null;
   isCustomCake: boolean;
 };
@@ -98,6 +101,30 @@ export function BirthdayCelebrationView({
   const categoryMap = React.useMemo(() => {
     return new Map(categories.map((c) => [c.id, c.name]));
   }, [categories]);
+
+  // Dedicated or best matching Custom Birthday Cake Item
+  const customCakeItem = React.useMemo(() => {
+    // 1. Dedicated custom design item
+    const dedicated = menuItems.find(
+      (i) =>
+        i.id === "7637c7c8-07e8-4955-9b0a-8fe1a074a750" ||
+        i.name.toLowerCase().includes("custom design") ||
+        i.name.toLowerCase().includes("photo birthday cake")
+    );
+    if (dedicated) return dedicated;
+
+    // 2. Any item in Birthday Cakes category or named cake
+    return (
+      menuItems.find((i) => {
+        const cat = categoryMap.get(i.category_id)?.toLowerCase() ?? "";
+        return (
+          cat.includes("cake") ||
+          i.name.toLowerCase().includes("cake") ||
+          (i.flavours && i.flavours.length > 0)
+        );
+      }) ?? null
+    );
+  }, [menuItems, categoryMap]);
 
   // Filtered products
   const filteredProducts = React.useMemo(() => {
@@ -222,16 +249,19 @@ export function BirthdayCelebrationView({
       originalPrice: Math.max(customization.unitPrice, originalPrice),
       quantity: customization.quantity,
       isVeg: item.is_veg,
+      variantId: customization.variantId ?? null,
       variantLabel: customization.variantLabel,
       selectedFlavour: customization.selectedFlavour,
       eggPreference: customization.eggPreference,
       cakeMessage: customization.cakeMessage || null,
       customImageUrl: customization.customImageUrl,
+      specialInstructions: customization.specialInstructions || null,
       preorderAt: customization.preorderAt || null,
       isCustomCake: true,
     };
 
     setPackageItems((prev) => [...prev, newPackageCake]);
+    toast.success(`Custom cake added to your Birthday Package!`);
   };
 
   // Add Entire Birthday Package to Cart
@@ -243,15 +273,24 @@ export function BirthdayCelebrationView({
 
     // Add each package item to the global cart
     for (const p of packageItems) {
+      const messageParts = [
+        p.cakeMessage,
+        p.specialInstructions ? `Special Note: ${p.specialInstructions}` : null,
+        p.preorderAt ? `Requested Date: ${p.preorderAt}` : null,
+      ].filter(Boolean);
+      const combinedMessage =
+        messageParts.length > 0 ? messageParts.join(" | ") : null;
+
       addToCart({
         menuItemId: p.menuItemId,
         name: p.name,
         imageUrl: p.imageUrl,
         isVeg: p.isVeg,
+        variantId: p.variantId ?? null,
         variantLabel: p.variantLabel ?? null,
         selectedFlavour: p.selectedFlavour ?? null,
         eggPreference: p.eggPreference ?? null,
-        cakeMessage: p.cakeMessage ?? null,
+        cakeMessage: combinedMessage,
         customImageUrl: p.customImageUrl ?? null,
         unitPrice: p.unitPrice,
         quantity: p.quantity,
@@ -311,10 +350,23 @@ export function BirthdayCelebrationView({
 
             {/* CTAs */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              {customCakeItem && (
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => setCustomizingCake(customCakeItem)}
+                  className="h-12 rounded-xl bg-gradient-to-r from-amber-600 via-primary to-rose-600 px-6 font-black text-white shadow-lg transition-transform hover:scale-[1.02]"
+                >
+                  <Camera className="mr-2 size-4.5" />
+                  Send Custom Cake Photo
+                </Button>
+              )}
+
               <Button
                 asChild
                 size="lg"
-                className="h-12 rounded-xl px-6 font-bold shadow-md"
+                variant="outline"
+                className="h-12 rounded-xl px-5 font-bold shadow-xs hover:border-primary/50"
               >
                 <a href="#birthday-products">
                   <Sparkles className="mr-2 size-4.5" />
@@ -334,7 +386,7 @@ export function BirthdayCelebrationView({
                     el?.scrollIntoView({ behavior: "smooth" });
                   }
                 }}
-                className="h-12 rounded-xl px-6 font-bold"
+                className="h-12 rounded-xl px-5 font-bold"
               >
                 <Package className="mr-2 size-4.5 text-primary" />
                 Build Package ({totalPackageItemsCount} items)
@@ -452,6 +504,52 @@ export function BirthdayCelebrationView({
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* LEFT COLUMN: PRODUCTS CATALOG (8 cols on desktop) */}
           <div className="lg:col-span-7 xl:col-span-8">
+            {/* Custom Cake / Photo Cake Studio Spotlight Banner */}
+            {customCakeItem && (
+              <div className="mb-6 overflow-hidden rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-amber-500/15 via-primary/10 to-rose-500/10 p-5 shadow-sm sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/15 px-3 py-0.5 text-xs font-black uppercase tracking-wider text-primary">
+                      <Camera className="size-3.5" />
+                      <span>Photo Cake & Custom Design Studio</span>
+                    </div>
+                    <h3 className="font-heading text-xl font-black text-foreground sm:text-2xl">
+                      Have a Custom Cake Photo in Mind? 📸
+                    </h3>
+                    <p className="text-xs font-semibold leading-relaxed text-muted-foreground sm:text-sm">
+                      Upload your Pinterest, Instagram, or photo album inspiration. Pick weight (0.5kg – 5kg), flavour, egg/eggless preference, name message, and chef instructions!
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-bold text-foreground/85">
+                      <span className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-1 shadow-2xs">
+                        📷 Photo Reference
+                      </span>
+                      <span className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-1 shadow-2xs">
+                        🍰 9 Flavours
+                      </span>
+                      <span className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-1 shadow-2xs">
+                        🥚 100% Eggless Option
+                      </span>
+                      <span className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-1 shadow-2xs">
+                        ✍️ Name on Cake
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 pt-2 sm:pt-0">
+                    <Button
+                      type="button"
+                      size="lg"
+                      onClick={() => setCustomizingCake(customCakeItem)}
+                      className="h-11 w-full rounded-2xl bg-gradient-to-r from-amber-600 to-primary px-5 font-black text-white shadow-md transition-transform hover:scale-[1.02] sm:w-auto"
+                    >
+                      <Camera className="mr-2 size-4.5" />
+                      Upload Photo & Order
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="font-heading text-xl font-black text-foreground sm:text-2xl">
@@ -565,6 +663,11 @@ export function BirthdayCelebrationView({
                           >
                             {categoryMap.get(product.category_id) ?? "Birthday"}
                           </Badge>
+                          {product.name.toLowerCase().includes("custom") && (
+                            <Badge className="bg-amber-600 text-[10px] font-black text-white shadow-xs">
+                              📸 Photo Ready
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Discount Badge */}
@@ -639,10 +742,23 @@ export function BirthdayCelebrationView({
                                 type="button"
                                 size="sm"
                                 onClick={() => setCustomizingCake(product)}
-                                className="h-9 rounded-xl px-3 text-xs font-bold shadow-xs"
+                                className={
+                                  product.name.toLowerCase().includes("custom")
+                                    ? "h-9 rounded-xl bg-gradient-to-r from-amber-600 to-primary px-3 text-xs font-bold text-white shadow-xs"
+                                    : "h-9 rounded-xl px-3 text-xs font-bold shadow-xs"
+                                }
                               >
-                                <Sparkles className="mr-1 size-3.5" />
-                                Customize Cake
+                                {product.name.toLowerCase().includes("custom") ? (
+                                  <>
+                                    <Camera className="mr-1 size-3.5" />
+                                    Upload & Customize
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="mr-1 size-3.5" />
+                                    Customize Cake
+                                  </>
+                                )}
                               </Button>
                             ) : existingQty > 0 ? (
                               /* Stepper right on card */
@@ -813,9 +929,20 @@ export function BirthdayCelebrationView({
                                       {item.selectedFlavour} · {item.eggPreference}
                                     </p>
                                   )}
+                                  {item.customImageUrl && (
+                                    <p className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                                      <Camera className="size-3" />
+                                      <span>Custom photo attached</span>
+                                    </p>
+                                  )}
                                   {item.cakeMessage && (
                                     <p className="italic">
                                       &ldquo;{item.cakeMessage}&rdquo;
+                                    </p>
+                                  )}
+                                  {item.specialInstructions && (
+                                    <p className="line-clamp-2 text-muted-foreground">
+                                      Note: {item.specialInstructions}
                                     </p>
                                   )}
                                 </div>
@@ -1009,10 +1136,23 @@ export function BirthdayCelebrationView({
                   <p className="text-[11px] font-semibold text-muted-foreground">
                     {formatPrice(item.unitPrice)} each
                   </p>
-                  {item.isCustomCake && item.variantLabel && (
-                    <p className="text-[10px] font-bold text-primary">
-                      {item.variantLabel} · {item.selectedFlavour}
-                    </p>
+                  {item.isCustomCake && (
+                    <div className="mt-0.5 space-y-0.5 text-[10px] text-primary">
+                      {item.variantLabel && (
+                        <p className="font-bold">
+                          {item.variantLabel} · {item.selectedFlavour}
+                        </p>
+                      )}
+                      {item.customImageUrl && (
+                        <p className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                          <Camera className="size-2.5" />
+                          <span>Photo attached</span>
+                        </p>
+                      )}
+                      {item.cakeMessage && (
+                        <p className="italic">&ldquo;{item.cakeMessage}&rdquo;</p>
+                      )}
+                    </div>
                   )}
                 </div>
 

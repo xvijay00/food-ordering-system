@@ -73,3 +73,4 @@ export default async function AdminClientsPage() {
 
   return <ClientRecordsView orders={orders} />;
 }
+
