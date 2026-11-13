@@ -79,6 +79,10 @@ export async function POST(request: Request) {
   const startTime = Date.now();
   const requestId =
     request.headers.get("x-request-id") || crypto.randomUUID();
+  let activeIdempotencyKey: string | null = null;
+  let resolveInFlight:
+    | ((val: { orderToken: string; orderNo: number } | null) => void)
+    | null = null;
 
   try {
     // 1. Parse and strictly validate request body with Zod
@@ -116,6 +120,7 @@ export async function POST(request: Request) {
       input.idempotencyKey?.trim() ||
       request.headers.get("x-idempotency-key")?.trim() ||
       null;
+    activeIdempotencyKey = idempotencyKey;
 
     // 2. IDEMPOTENCY CHECK: Prevent duplicate orders from double-clicks or retries
     if (idempotencyKey) {
@@ -182,7 +187,6 @@ export async function POST(request: Request) {
       }
     }
 
-    let resolveInFlight: ((val: { orderToken: string; orderNo: number } | null) => void) | null = null;
     if (idempotencyKey) {
       const inFlightPromise = new Promise<{ orderToken: string; orderNo: number } | null>((res) => {
         resolveInFlight = res;
@@ -654,14 +658,22 @@ export async function POST(request: Request) {
       orderToken: createdOrder.order_token,
       orderNo: createdOrder.order_no,
     };
-    if (resolveInFlight) resolveInFlight(orderResult);
-    if (idempotencyKey) {
-      setTimeout(() => inFlightOrders.delete(idempotencyKey), 10000);
+    if (typeof resolveInFlight === "function") {
+      (resolveInFlight as (val: typeof orderResult) => void)(orderResult);
+    }
+    if (activeIdempotencyKey) {
+      const keyToClear = activeIdempotencyKey;
+      setTimeout(() => inFlightOrders.delete(keyToClear), 10000);
     }
 
     return NextResponse.json(orderResult, { status: 201 });
   } catch (err) {
-    if (idempotencyKey) inFlightOrders.delete(idempotencyKey);
+    if (typeof resolveInFlight === "function") {
+      (resolveInFlight as (val: null) => void)(null);
+    }
+    if (activeIdempotencyKey) {
+      inFlightOrders.delete(activeIdempotencyKey);
+    }
     logger.error("Unhandled exception in order placement", err, { requestId });
     return NextResponse.json(
       { error: "Something went wrong while placing your order." },
