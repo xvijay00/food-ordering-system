@@ -26,6 +26,10 @@ type MenuRowWithOptions = {
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_ORDERS = 5;
 const orderRateLimitStore = new Map<string, number[]>();
+const inFlightOrders = new Map<
+  string,
+  Promise<{ orderToken: string; orderNo: number } | null>
+>();
 
 function getClientIp(request: Request): string {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -115,6 +119,18 @@ export async function POST(request: Request) {
 
     // 2. IDEMPOTENCY CHECK: Prevent duplicate orders from double-clicks or retries
     if (idempotencyKey) {
+      const activeInFlight = inFlightOrders.get(idempotencyKey);
+      if (activeInFlight) {
+        logger.info("Duplicate order prevented via active in-flight mutex", {
+          requestId,
+          idempotencyKey,
+        });
+        const existingResult = await activeInFlight;
+        if (existingResult) {
+          return NextResponse.json(existingResult);
+        }
+      }
+
       try {
         const { data: existingByKey } = await admin
           .from("orders")
@@ -164,6 +180,14 @@ export async function POST(request: Request) {
           });
         }
       }
+    }
+
+    let resolveInFlight: ((val: { orderToken: string; orderNo: number } | null) => void) | null = null;
+    if (idempotencyKey) {
+      const inFlightPromise = new Promise<{ orderToken: string; orderNo: number } | null>((res) => {
+        resolveInFlight = res;
+      });
+      inFlightOrders.set(idempotencyKey, inFlightPromise);
     }
 
     // 3. PERSISTENT RATE LIMIT CHECK (Phone-level & IP-level)
@@ -626,14 +650,18 @@ export async function POST(request: Request) {
     });
 
     // 11. Return { orderToken, orderNo }
-    return NextResponse.json(
-      {
-        orderToken: createdOrder.order_token,
-        orderNo: createdOrder.order_no,
-      },
-      { status: 201 }
-    );
+    const orderResult = {
+      orderToken: createdOrder.order_token,
+      orderNo: createdOrder.order_no,
+    };
+    if (resolveInFlight) resolveInFlight(orderResult);
+    if (idempotencyKey) {
+      setTimeout(() => inFlightOrders.delete(idempotencyKey), 10000);
+    }
+
+    return NextResponse.json(orderResult, { status: 201 });
   } catch (err) {
+    if (idempotencyKey) inFlightOrders.delete(idempotencyKey);
     logger.error("Unhandled exception in order placement", err, { requestId });
     return NextResponse.json(
       { error: "Something went wrong while placing your order." },

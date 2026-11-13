@@ -39,3 +39,4 @@ test("Order Transitions - delivery staff cannot cancel or confirm orders", () =>
   const t3 = canRoleTransitionOrder("delivery", "delivery", "confirmed", "delivered");
   assert.equal(t3.allowed, true);
 });
+

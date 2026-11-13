@@ -56,3 +56,4 @@ test("Cart Calculations - should return 0 for empty cart", () => {
   assert.equal(calculateCartItemCount([]), 0);
   assert.equal(calculateCartTotal([], "delivery", 40), 0);
 });
+
