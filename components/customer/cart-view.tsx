@@ -64,14 +64,14 @@ export function CartView() {
     <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="font-heading text-3xl font-black tracking-tight text-foreground sm:text-4xl">
             Your Cart
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-base font-semibold text-foreground/80">
             {itemCount} {itemCount === 1 ? "item" : "items"} selected
           </p>
         </div>
-        <Button asChild variant="outline" size="sm" className="min-h-10">
+        <Button asChild variant="outline" size="sm" className="min-h-11 px-5 text-sm font-bold">
           <Link href="/menu">Add more items</Link>
         </Button>
       </div>
@@ -79,32 +79,32 @@ export function CartView() {
       {/* Cart Items */}
       <Card className="rounded-2xl">
         <CardHeader className="border-b border-border/60 pb-3">
-          <CardTitle className="text-base">Items</CardTitle>
+          <CardTitle className="text-lg font-bold">Items</CardTitle>
         </CardHeader>
         <CardContent className="divide-y divide-border/60 p-0">
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-start justify-between gap-3 px-4 py-4"
+              className="flex items-start justify-between gap-3 px-4 py-4 sm:px-5"
             >
-              <div className="min-w-0 flex-1 space-y-1">
+              <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex items-center gap-2">
                   {typeof item.isVeg === "boolean" && (
                     <VegIndicator isVeg={item.isVeg} />
                   )}
-                  <h2 className="truncate font-heading text-sm font-semibold sm:text-base">
+                  <h2 className="truncate font-heading text-base font-bold text-foreground sm:text-lg">
                     {item.name}
                   </h2>
                 </div>
 
                 {item.variantLabel && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-semibold text-foreground/85">
                     Size / Weight: {item.variantLabel}
                   </p>
                 )}
 
                 {(item.selectedFlavour || item.eggPreference) && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-semibold text-foreground/80">
                     {[item.selectedFlavour, item.eggPreference]
                       .filter(Boolean)
                       .join(" · ")}
@@ -112,46 +112,46 @@ export function CartView() {
                 )}
 
                 {item.addons.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-semibold text-foreground/80">
                     Add-ons: {item.addons.map((a) => a.name).join(", ")}
                   </p>
                 )}
 
                 {item.cakeMessage && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-bold text-primary">
                     Cake message: &ldquo;{item.cakeMessage}&rdquo;
                   </p>
                 )}
 
                 {item.customImageUrl && (
                   <div className="flex items-center gap-2 pt-1">
-                    <div className="relative size-9 overflow-hidden rounded-lg ring-1 ring-border">
+                    <div className="relative size-11 overflow-hidden rounded-xl ring-2 ring-border">
                       <Image
                         src={item.customImageUrl}
                         alt="Custom cake design"
                         fill
-                        sizes="36px"
+                        sizes="44px"
                         className="object-cover"
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm font-bold text-foreground/80">
                       Custom cake image attached
                     </span>
                   </div>
                 )}
 
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-sm font-bold text-foreground/70">
                   {formatPrice(item.unitPrice)} each
                 </p>
               </div>
 
-              <div className="flex flex-col items-end gap-2">
-                <p className="text-sm font-bold tabular-nums">
+              <div className="flex flex-col items-end gap-2.5">
+                <p className="text-lg font-black tabular-nums text-foreground">
                   {formatPrice(item.unitPrice * item.quantity)}
                 </p>
 
-                <div className="flex items-center gap-1.5">
-                  <div className="inline-flex items-center rounded-xl border border-border bg-background p-0.5">
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex items-center rounded-xl border border-border bg-background p-1">
                     <Button
                       type="button"
                       variant="ghost"
@@ -160,9 +160,9 @@ export function CartView() {
                       onClick={() => decrement(item.id)}
                       className="size-9"
                     >
-                      <Minus className="size-3.5" aria-hidden="true" />
+                      <Minus className="size-4" aria-hidden="true" />
                     </Button>
-                    <span className="min-w-7 text-center text-xs font-bold tabular-nums">
+                    <span className="min-w-8 text-center text-sm font-black tabular-nums">
                       {item.quantity}
                     </span>
                     <Button
@@ -173,7 +173,7 @@ export function CartView() {
                       onClick={() => increment(item.id)}
                       className="size-9"
                     >
-                      <Plus className="size-3.5" aria-hidden="true" />
+                      <Plus className="size-4" aria-hidden="true" />
                     </Button>
                   </div>
 
@@ -185,7 +185,7 @@ export function CartView() {
                     onClick={() => remove(item.id)}
                     className="size-9 text-muted-foreground hover:text-destructive"
                   >
-                    <Trash2 className="size-4" aria-hidden="true" />
+                    <Trash2 className="size-4.5" aria-hidden="true" />
                   </Button>
                 </div>
               </div>
@@ -196,29 +196,29 @@ export function CartView() {
 
       {/* Kitchen / Order Notes */}
       <Card className="rounded-2xl">
-        <CardContent className="space-y-2 p-4">
-          <label htmlFor="cart-notes" className="block text-sm font-medium">
-            Cooking & Order Notes (optional)
+        <CardContent className="space-y-2 p-5">
+          <label htmlFor="cart-notes" className="block text-base font-bold text-foreground">
+            Cooking &amp; Order Notes (optional)
           </label>
           <Textarea
             id="cart-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             maxLength={300}
-            placeholder="Less spicy, no onions, extra cutlery..."
-            className="min-h-20 rounded-xl"
+            placeholder="Less spicy, eggless, extra candles..."
+            className="min-h-24 rounded-xl text-base font-medium"
           />
         </CardContent>
       </Card>
 
       {/* Subtotal & Checkout CTA */}
       <Card className="rounded-2xl">
-        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <p className="text-xs font-bold tracking-wider text-foreground/75 uppercase">
               Subtotal
             </p>
-            <p className="text-2xl font-bold tabular-nums">
+            <p className="text-3xl font-black tabular-nums text-foreground">
               {formatPrice(subtotal)}
             </p>
           </div>
@@ -226,11 +226,11 @@ export function CartView() {
           <Button
             asChild
             size="lg"
-            className="min-h-12 gap-2 rounded-xl px-6 text-base font-semibold"
+            className="min-h-13 gap-2 rounded-xl px-7 text-base font-black shadow-md"
           >
             <Link href="/checkout">
               <span>Proceed to Checkout</span>
-              <ArrowRight className="size-4" aria-hidden="true" />
+              <ArrowRight className="size-5" aria-hidden="true" />
             </Link>
           </Button>
         </CardContent>

@@ -35,12 +35,12 @@ export function BottomNav() {
                     ? `${label} (${itemCount} items)`
                     : label
                 }
-                className="relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:bg-primary/10 aria-[current=page]:font-semibold aria-[current=page]:text-primary"
+                className="relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-xs font-bold text-foreground/75 transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:bg-primary/10 aria-[current=page]:font-black aria-[current=page]:text-primary"
               >
                 <span className="relative inline-flex">
                   <Icon className="size-5" aria-hidden="true" />
                   {isCart && itemCount > 0 && (
-                    <Badge className="absolute -top-2 -right-3 flex h-4 min-w-4 items-center justify-center px-1 text-[10px] leading-none">
+                    <Badge className="absolute -top-2 -right-3 flex h-4 min-w-4 items-center justify-center px-1 text-[11px] font-black leading-none">
                       {badgeText}
                     </Badge>
                   )}

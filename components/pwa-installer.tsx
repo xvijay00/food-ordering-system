@@ -289,3 +289,4 @@ function IosInstructionsModal({
     </Dialog>
   );
 }
+

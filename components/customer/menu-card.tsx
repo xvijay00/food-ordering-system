@@ -203,20 +203,20 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
         </div>
 
         {/* Product Details */}
-        <div className="space-y-2.5 p-5 sm:p-6">
+        <div className="space-y-3 p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
             <VegIndicator isVeg={item.is_veg} />
             {item.is_bestseller && (
               <Badge
                 variant="secondary"
-                className="gap-1 bg-amber-500/15 text-xs text-amber-700 dark:text-amber-300"
+                className="gap-1 bg-amber-500/15 text-xs font-bold text-amber-800 dark:text-amber-200"
               >
                 <Sparkles className="size-3.5" aria-hidden="true" />
                 Bestseller
               </Badge>
             )}
             {isOutOfStock ? (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs font-bold">
                 Sold out
               </Badge>
             ) : (
@@ -224,7 +224,7 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
               stockQty <= 5 && (
                 <Badge
                   variant="secondary"
-                  className="bg-rose-500/10 text-xs text-rose-700 dark:text-rose-300"
+                  className="bg-rose-500/10 text-xs font-bold text-rose-800 dark:text-rose-200"
                 >
                   Only {stockQty} left
                 </Badge>
@@ -233,16 +233,16 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
           </div>
 
           <div>
-            <h3 className="font-heading text-xl font-bold leading-snug tracking-tight sm:text-2xl">
+            <h3 className="font-heading text-2xl font-extrabold leading-snug tracking-tight text-foreground sm:text-3xl">
               {item.name}
             </h3>
             {item.description && (
-              <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-2 line-clamp-2 text-base font-medium leading-relaxed text-foreground/85">
                 {item.description}
               </p>
             )}
             {(flavours.length > 0 || eggOptions.length > 0) && (
-              <p className="mt-2 line-clamp-1 text-xs font-medium text-muted-foreground">
+              <p className="mt-2 line-clamp-1 text-sm font-semibold text-foreground/75">
                 {[
                   flavours.length > 0 ? flavours.slice(0, 3).join(", ") : null,
                   eggOptions.length > 0 ? eggOptions.join(" / ") : null,
@@ -255,28 +255,28 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border/50 px-5 py-4 sm:px-6">
+      <div className="flex items-center justify-between gap-3 border-t border-border/60 px-5 py-4 sm:px-6">
         <div>
           {minVariantPrice !== null ? (
-            <p className="text-xl font-bold tracking-tight">
+            <p className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
               From {formatPrice(minVariantPrice)}
             </p>
           ) : hasDiscount ? (
             <div className="flex flex-wrap items-baseline gap-2">
-              <p className="text-xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+              <p className="text-2xl font-black tracking-tight text-emerald-700 dark:text-emerald-400 sm:text-3xl">
                 {formatPrice(sellingPrice)}
               </p>
-              <p className="text-sm text-muted-foreground line-through">
+              <p className="text-base font-semibold text-muted-foreground line-through">
                 {formatPrice(originalPrice)}
               </p>
             </div>
           ) : (
-            <p className="text-xl font-bold tracking-tight">
+            <p className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
               {formatPrice(originalPrice)}
             </p>
           )}
           {hasCustomization && (
-            <p className="text-xs text-muted-foreground">Customizable</p>
+            <p className="text-xs font-bold text-primary">Customizable</p>
           )}
         </div>
 
@@ -285,7 +285,7 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
             type="button"
             variant="outline"
             disabled
-            className="min-h-11 rounded-xl px-5 text-sm font-semibold"
+            className="min-h-12 rounded-xl px-6 text-base font-bold"
           >
             Sold out
           </Button>
@@ -297,11 +297,11 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
               size="icon"
               aria-label={`Decrease ${item.name} quantity`}
               onClick={() => decrement(simpleCartItem.id)}
-              className="size-9 text-primary hover:bg-primary/15"
+              className="size-10 text-primary hover:bg-primary/15"
             >
               <Minus className="size-4" aria-hidden="true" />
             </Button>
-            <span className="min-w-8 text-center text-sm font-bold text-primary tabular-nums">
+            <span className="min-w-9 text-center text-base font-black text-primary tabular-nums">
               {simpleCartItem.quantity}
             </span>
             <Button
@@ -311,7 +311,7 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
               disabled={!shopOpen || atStockLimit}
               aria-label={`Increase ${item.name} quantity`}
               onClick={handleIncrementSimple}
-              className="size-9 text-primary hover:bg-primary/15"
+              className="size-10 text-primary hover:bg-primary/15"
             >
               <Plus className="size-4" aria-hidden="true" />
             </Button>
@@ -324,7 +324,7 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
             }
             disabled={isDisabled}
             onClick={handleDirectAdd}
-            className="min-h-11 rounded-xl px-6 text-sm font-semibold"
+            className="min-h-12 rounded-xl px-7 text-base font-bold shadow-sm"
           >
             {hasCustomization && totalInCartForItem > 0
               ? `Add (${totalInCartForItem})`

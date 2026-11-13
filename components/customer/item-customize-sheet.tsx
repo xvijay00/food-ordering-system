@@ -199,28 +199,30 @@ export function ItemCustomizeSheet({
         <SheetHeader className="border-b border-border/60 pb-3">
           <div className="flex items-center gap-2">
             <VegIndicator isVeg={item.is_veg} />
-            <SheetTitle className="font-heading text-lg">
+            <SheetTitle className="font-heading text-xl font-extrabold text-foreground sm:text-2xl">
               {item.name}
             </SheetTitle>
             {stockQty !== null && stockQty > 0 && stockQty <= 5 && (
               <Badge
                 variant="secondary"
-                className="bg-rose-500/10 text-[10px] text-rose-700"
+                className="bg-rose-500/10 text-xs font-bold text-rose-700"
               >
                 {stockQty} left
               </Badge>
             )}
           </div>
           {item.description && (
-            <SheetDescription>{item.description}</SheetDescription>
+            <SheetDescription className="text-base font-medium text-foreground/80">
+              {item.description}
+            </SheetDescription>
           )}
         </SheetHeader>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-4 py-3">
+        <div className="flex-1 space-y-6 overflow-y-auto px-4 py-4">
           {/* Product Photo Gallery */}
           {images.length > 0 && (
             <div className="space-y-2">
-              <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-muted">
+              <div className="relative h-48 w-full overflow-hidden rounded-2xl bg-muted">
                 <Image
                   src={images[activePhotoIndex] ?? images[0]}
                   alt={`${item.name} preview`}
@@ -230,13 +232,13 @@ export function ItemCustomizeSheet({
                 />
               </div>
               {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2.5 overflow-x-auto pb-1">
                   {images.map((url, idx) => (
                     <button
                       key={`${url}-${idx}`}
                       type="button"
                       onClick={() => setActivePhotoIndex(idx)}
-                      className={`relative size-14 shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${
+                      className={`relative size-16 shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${
                         idx === activePhotoIndex
                           ? "ring-primary"
                           : "ring-transparent opacity-70 hover:opacity-100"
@@ -246,7 +248,7 @@ export function ItemCustomizeSheet({
                         src={url}
                         alt={`Thumbnail ${idx + 1}`}
                         fill
-                        sizes="56px"
+                        sizes="64px"
                         className="object-cover"
                       />
                     </button>
@@ -258,30 +260,30 @@ export function ItemCustomizeSheet({
 
           {/* Cake Size / Weight Variants */}
           {variants.length > 0 && (
-            <fieldset className="space-y-2">
-              <legend className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <fieldset className="space-y-2.5">
+              <legend className="text-sm font-bold tracking-wide text-foreground uppercase">
                 Choose Size / Weight
               </legend>
-              <div className="grid gap-2">
+              <div className="grid gap-2.5">
                 {variants.map((variant) => {
                   const checked = variant.id === selectedVariantId;
                   return (
                     <label
                       key={variant.id}
-                      className="flex min-h-11 cursor-pointer items-center justify-between rounded-xl border border-border px-3.5 py-2.5 text-sm transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                      className="flex min-h-12 cursor-pointer items-center justify-between rounded-xl border border-border px-4 py-3 text-base transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5"
                     >
-                      <span className="flex items-center gap-2.5 font-medium">
+                      <span className="flex items-center gap-3 font-semibold text-foreground">
                         <input
                           type="radio"
                           name={`variant-${item.id}`}
                           value={variant.id}
                           checked={checked}
                           onChange={() => setSelectedVariantId(variant.id)}
-                          className="size-4 accent-primary"
+                          className="size-4.5 accent-primary"
                         />
                         <span>{variant.label}</span>
                       </span>
-                      <span className="font-semibold">
+                      <span className="text-base font-extrabold text-foreground">
                         {formatPrice(Number(variant.price))}
                       </span>
                     </label>
@@ -293,11 +295,11 @@ export function ItemCustomizeSheet({
 
           {/* Flavour Picker */}
           {flavours.length > 0 && (
-            <fieldset className="space-y-2">
-              <legend className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <fieldset className="space-y-2.5">
+              <legend className="text-sm font-bold tracking-wide text-foreground uppercase">
                 Choose Flavour
               </legend>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {flavours.map((flavour) => {
                   const active = selectedFlavour === flavour;
                   return (
@@ -305,9 +307,9 @@ export function ItemCustomizeSheet({
                       key={flavour}
                       type="button"
                       onClick={() => setSelectedFlavour(flavour)}
-                      className={`min-h-9 rounded-full px-3.5 text-xs font-medium transition-colors ${
+                      className={`min-h-10 rounded-full px-4 text-sm font-bold transition-colors ${
                         active
-                          ? "bg-primary text-primary-foreground shadow-xs"
+                          ? "bg-primary text-primary-foreground shadow-sm"
                           : "border border-border bg-background text-foreground hover:bg-muted"
                       }`}
                     >
@@ -321,11 +323,11 @@ export function ItemCustomizeSheet({
 
           {/* Eggless / With Egg Picker */}
           {eggOptions.length > 0 && (
-            <fieldset className="space-y-2">
-              <legend className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <fieldset className="space-y-2.5">
+              <legend className="text-sm font-bold tracking-wide text-foreground uppercase">
                 Egg Preference
               </legend>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {eggOptions.map((option) => {
                   const active = eggPreference === option;
                   return (
@@ -333,9 +335,9 @@ export function ItemCustomizeSheet({
                       key={option}
                       type="button"
                       onClick={() => setEggPreference(option)}
-                      className={`min-h-9 rounded-full px-3.5 text-xs font-medium transition-colors ${
+                      className={`min-h-10 rounded-full px-4 text-sm font-bold transition-colors ${
                         active
-                          ? "bg-emerald-600 text-white shadow-xs"
+                          ? "bg-emerald-600 text-white shadow-sm"
                           : "border border-border bg-background text-foreground hover:bg-muted"
                       }`}
                     >
@@ -349,28 +351,28 @@ export function ItemCustomizeSheet({
 
           {/* Extra Toppings, Candles & Add-ons */}
           {activeAddons.length > 0 && (
-            <fieldset className="space-y-2">
-              <legend className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <fieldset className="space-y-2.5">
+              <legend className="text-sm font-bold tracking-wide text-foreground uppercase">
                 Extra Toppings &amp; Candles
               </legend>
-              <div className="grid gap-2">
+              <div className="grid gap-2.5">
                 {activeAddons.map((addon) => {
                   const checked = selectedAddonIds.includes(addon.id);
                   return (
                     <label
                       key={addon.id}
-                      className="flex min-h-11 cursor-pointer items-center justify-between rounded-xl border border-border px-3.5 py-2.5 text-sm transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                      className="flex min-h-12 cursor-pointer items-center justify-between rounded-xl border border-border px-4 py-3 text-base transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5"
                     >
-                      <span className="flex items-center gap-2.5 font-medium">
+                      <span className="flex items-center gap-3 font-semibold text-foreground">
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={() => toggleAddon(addon.id)}
-                          className="size-4 rounded accent-primary"
+                          className="size-4.5 rounded accent-primary"
                         />
                         <span>{addon.name}</span>
                       </span>
-                      <span className="text-muted-foreground">
+                      <span className="text-sm font-bold text-foreground/80">
                         +{formatPrice(Number(addon.price))}
                       </span>
                     </label>
@@ -382,10 +384,10 @@ export function ItemCustomizeSheet({
 
           {/* Custom Message on Cake */}
           {item.allow_custom_message && (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label
                 htmlFor="cake-message"
-                className="block text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                className="block text-sm font-bold tracking-wide text-foreground uppercase"
               >
                 Message on Cake (Optional)
               </label>
@@ -395,46 +397,46 @@ export function ItemCustomizeSheet({
                 value={cakeMessage}
                 onChange={(e) => setCakeMessage(e.target.value)}
                 placeholder="e.g., Happy Birthday Aarav!"
-                className="h-10 rounded-xl"
+                className="h-11 rounded-xl text-base font-medium"
               />
             </div>
           )}
 
           {/* Custom Cake Photo Upload */}
           {item.allow_custom_image && (
-            <div className="space-y-2">
-              <span className="block text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <div className="space-y-2.5">
+              <span className="block text-sm font-bold tracking-wide text-foreground uppercase">
                 Upload Custom Cake Design / Photo (Optional)
               </span>
               <div className="flex flex-wrap items-center gap-3">
                 {customImageUrl && (
-                  <div className="relative size-18 overflow-hidden rounded-xl ring-1 ring-border">
+                  <div className="relative size-20 overflow-hidden rounded-xl ring-2 ring-primary/40">
                     <Image
                       src={customImageUrl}
                       alt="Uploaded custom cake reference"
                       fill
-                      sizes="72px"
+                      sizes="80px"
                       className="object-cover"
                     />
                     <button
                       type="button"
                       aria-label="Remove uploaded cake photo"
                       onClick={() => setCustomImageUrl(null)}
-                      className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-full bg-background/90 text-foreground shadow"
+                      className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow"
                     >
-                      <X className="size-3" aria-hidden="true" />
+                      <X className="size-3.5" aria-hidden="true" />
                     </button>
                   </div>
                 )}
 
                 <label
                   htmlFor="cake-reference-upload"
-                  className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-input bg-background px-3.5 text-xs font-medium transition-colors hover:bg-muted"
+                  className="inline-flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl border border-input bg-background px-4 text-sm font-bold transition-colors hover:bg-muted"
                 >
                   {uploadingCakePhoto ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                   ) : (
-                    <ImagePlus className="size-4" aria-hidden="true" />
+                    <ImagePlus className="size-4.5" aria-hidden="true" />
                   )}
                   <span>
                     {uploadingCakePhoto
@@ -457,8 +459,8 @@ export function ItemCustomizeSheet({
           )}
         </div>
 
-        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-border/60 pt-3">
-          <div className="inline-flex items-center rounded-xl border border-border bg-background p-0.5">
+        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-border/60 px-4 py-3 sm:px-6">
+          <div className="inline-flex items-center rounded-xl border border-border bg-background p-1">
             <Button
               type="button"
               variant="ghost"
@@ -466,11 +468,11 @@ export function ItemCustomizeSheet({
               aria-label="Decrease quantity"
               disabled={quantity <= 1}
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="size-9"
+              className="size-10"
             >
               <Minus className="size-4" aria-hidden="true" />
             </Button>
-            <span className="min-w-8 text-center text-sm font-semibold tabular-nums">
+            <span className="min-w-9 text-center text-base font-black tabular-nums">
               {quantity}
             </span>
             <Button
@@ -480,7 +482,7 @@ export function ItemCustomizeSheet({
               aria-label="Increase quantity"
               disabled={remainingStock !== null && quantity >= remainingStock}
               onClick={() => setQuantity((q) => q + 1)}
-              className="size-9"
+              className="size-10"
             >
               <Plus className="size-4" aria-hidden="true" />
             </Button>
@@ -490,7 +492,7 @@ export function ItemCustomizeSheet({
             type="button"
             disabled={disabled || outOfStock || uploadingCakePhoto}
             onClick={handleAddToCart}
-            className="min-h-11 flex-1 font-semibold"
+            className="min-h-12 flex-1 text-base font-black shadow-sm"
           >
             {outOfStock
               ? "Out of Stock"

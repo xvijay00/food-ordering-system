@@ -110,23 +110,23 @@ export function MenuBrowser({
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6">
       {/* Delivery Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card/70 px-4 py-3">
-        <div className="flex items-center gap-2.5 text-sm">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-            <Bike className="size-4" aria-hidden="true" />
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card/70 px-4 py-3 sm:px-5">
+        <div className="flex items-center gap-3">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+            <Bike className="size-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="font-semibold">Delivery</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base font-bold text-foreground">Delivery</p>
+            <p className="text-sm font-medium text-foreground/80">
               Packed fresh and delivered to your address
             </p>
           </div>
         </div>
 
         {itemCount > 0 && (
-          <Button asChild variant="outline" size="sm" className="min-h-9 gap-1.5">
+          <Button asChild variant="outline" size="sm" className="min-h-10 gap-2 px-4 text-sm font-bold">
             <Link href="/cart">
-              <ShoppingBag className="size-3.5" aria-hidden="true" />
+              <ShoppingBag className="size-4" aria-hidden="true" />
               <span>View Cart ({itemCount})</span>
             </Link>
           </Button>
@@ -136,7 +136,7 @@ export function MenuBrowser({
       {!shopOpen && (
         <div
           role="status"
-          className="flex items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200"
+          className="flex items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-base font-semibold text-amber-950 dark:text-amber-100"
         >
           <AlertCircle className="size-5 shrink-0" aria-hidden="true" />
           <p>
@@ -149,7 +149,7 @@ export function MenuBrowser({
       {fetchError && (
         <div
           role="alert"
-          className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+          className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-base font-semibold text-destructive"
         >
           <AlertCircle className="size-5 shrink-0" aria-hidden="true" />
           <p>{fetchError}</p>
@@ -160,7 +160,7 @@ export function MenuBrowser({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 sm:max-w-md">
           <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-foreground/60"
             aria-hidden="true"
           />
           <Input
@@ -169,14 +169,14 @@ export function MenuBrowser({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search dishes by name..."
             aria-label="Search dishes by name"
-            className="h-11 rounded-xl pr-9 pl-9"
+            className="h-12 rounded-xl pr-10 pl-11 text-base font-semibold text-foreground placeholder:text-foreground/50"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
               aria-label="Clear search"
-              className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+              className="absolute top-1/2 right-2.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-foreground/70 hover:text-foreground"
             >
               <X className="size-4" aria-hidden="true" />
             </button>
@@ -186,7 +186,7 @@ export function MenuBrowser({
         <div
           role="group"
           aria-label="Dietary filter"
-          className="inline-flex w-fit items-center gap-1 rounded-xl border border-border/80 bg-card p-1"
+          className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-border/80 bg-card p-1.5"
         >
           <Button
             type="button"
@@ -194,7 +194,7 @@ export function MenuBrowser({
             size="sm"
             aria-pressed={dietaryFilter === "all"}
             onClick={() => setDietaryFilter("all")}
-            className="min-h-9 rounded-lg px-3 text-xs font-medium"
+            className="min-h-10 rounded-lg px-4 text-sm font-bold"
           >
             All
           </Button>
@@ -206,7 +206,7 @@ export function MenuBrowser({
             onClick={() =>
               setDietaryFilter((prev) => (prev === "veg" ? "all" : "veg"))
             }
-            className="min-h-9 gap-1.5 rounded-lg px-3 text-xs font-medium"
+            className="min-h-10 gap-2 rounded-lg px-4 text-sm font-bold"
           >
             <VegIndicator isVeg />
             <span>Veg</span>
@@ -221,7 +221,7 @@ export function MenuBrowser({
                 prev === "non_veg" ? "all" : "non_veg"
               )
             }
-            className="min-h-9 gap-1.5 rounded-lg px-3 text-xs font-medium"
+            className="min-h-10 gap-2 rounded-lg px-4 text-sm font-bold"
           >
             <VegIndicator isVeg={false} />
             <span>Non-veg</span>
@@ -234,7 +234,7 @@ export function MenuBrowser({
         <div className="sticky top-14 z-30 -mx-4 border-y border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6">
           <nav
             aria-label="Menu categories"
-            className="flex gap-2 overflow-x-auto"
+            className="flex gap-2.5 overflow-x-auto"
           >
             {visibleSections.map(({ category }) => {
               const isActive = effectiveActiveCategoryId === category.id;
@@ -244,7 +244,7 @@ export function MenuBrowser({
                   href={`#category-${category.id}`}
                   onClick={() => setActiveCategoryId(category.id)}
                   aria-current={isActive ? "true" : undefined}
-                  className="category-scrollspy-link inline-flex min-h-10 shrink-0 items-center rounded-full border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+                  className="category-scrollspy-link inline-flex min-h-11 shrink-0 items-center rounded-full border border-border px-5 text-base font-bold text-foreground/80 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
                 >
                   {category.name}
                 </a>
@@ -257,19 +257,19 @@ export function MenuBrowser({
       {/* Category Sections */}
       {visibleSections.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-10 text-center">
-          <p className="font-medium text-foreground">
+          <p className="text-lg font-bold text-foreground">
             {menuItems.length === 0
               ? "Menu is being updated"
               : "No bakery items match your filter"}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 text-base font-medium text-foreground/80">
             {menuItems.length === 0
               ? "Freshly baked cakes, pastries, pizzas, and breads are being added. Check back shortly!"
               : "Try clearing your search input or resetting the filter."}
           </p>
         </div>
       ) : (
-        <div className="space-y-8 pb-20">
+        <div className="space-y-10 pb-24">
           {visibleSections.map(({ category, items: sectionItems }) => (
             <section
               key={category.id}
@@ -277,11 +277,11 @@ export function MenuBrowser({
               tabIndex={-1}
               className="scroll-mt-32 space-y-4 focus:outline-none"
             >
-              <div className="flex items-baseline justify-between gap-2">
-                <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">
+              <div className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-2">
+                <h2 className="font-heading text-2xl font-black tracking-tight text-foreground sm:text-3xl">
                   {category.name}
                 </h2>
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-sm font-bold text-foreground/70">
                   {sectionItems.length}{" "}
                   {sectionItems.length === 1 ? "item" : "items"}
                 </span>
@@ -307,18 +307,18 @@ export function MenuBrowser({
         <div className="fixed inset-x-0 bottom-[calc(4.6rem+env(safe-area-inset-bottom,0px))] z-30 mx-auto max-w-xl px-4 md:bottom-6">
           <Link
             href="/cart"
-            className="flex min-h-13 items-center justify-between gap-4 rounded-2xl bg-primary px-4 py-3 text-primary-foreground shadow-lg ring-1 ring-primary/20 transition-transform hover:scale-[1.01] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.99]"
+            className="flex min-h-14 items-center justify-between gap-4 rounded-2xl bg-primary px-5 py-3.5 text-primary-foreground shadow-xl ring-1 ring-primary/20 transition-transform hover:scale-[1.01] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary-foreground/15">
-                <ShoppingBag className="size-4" aria-hidden="true" />
+              <span className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground/20">
+                <ShoppingBag className="size-5" aria-hidden="true" />
               </span>
-              <span className="text-sm font-semibold">
+              <span className="text-base font-extrabold tracking-tight">
                 View Cart ({itemCount} {itemCount === 1 ? "item" : "items"},{" "}
                 {formatPrice(subtotal)})
               </span>
             </div>
-            <ArrowRight className="size-4 shrink-0" aria-hidden="true" />
+            <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
           </Link>
         </div>
       )}

@@ -294,14 +294,14 @@ export function CheckoutForm() {
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="font-heading text-3xl font-black tracking-tight text-foreground sm:text-4xl">
             Checkout
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-base font-semibold text-foreground/80">
             Confirm your order details and review your bill.
           </p>
         </div>
-        <Button asChild variant="outline" size="sm" className="min-h-10 gap-1.5">
+        <Button asChild variant="outline" size="sm" className="min-h-11 gap-2 px-5 text-sm font-bold">
           <Link href="/cart">
             <ArrowLeft className="size-4" aria-hidden="true" />
             <span>Back to Cart</span>
@@ -312,7 +312,7 @@ export function CheckoutForm() {
       {!settings.shop_open && (
         <div
           role="alert"
-          className="flex items-center gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+          className="flex items-center gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-base font-bold text-destructive"
         >
           <AlertCircle className="size-5 shrink-0" aria-hidden="true" />
           <p>Restaurant is closed</p>
@@ -324,11 +324,11 @@ export function CheckoutForm() {
         <div className="lg:col-span-7">
           <Card className="rounded-2xl">
             <CardHeader className="border-b border-border/60 pb-3">
-              <CardTitle id="checkout-form-title" className="text-base">
+              <CardTitle id="checkout-form-title" className="text-lg font-bold">
                 Order & Contact Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-5">
+            <CardContent className="p-4 sm:p-6">
               <form
                 aria-labelledby="checkout-form-title"
                 onSubmit={handleSubmit(onSubmit)}
@@ -336,8 +336,8 @@ export function CheckoutForm() {
                 className="space-y-5"
               >
                 {/* Delivery Mode Badge */}
-                <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-sm font-medium text-emerald-900 dark:text-emerald-200">
-                  <Bike className="size-4 shrink-0" aria-hidden="true" />
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-base font-bold text-emerald-950 dark:text-emerald-100">
+                  <Bike className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                   <span>Delivery to your location</span>
                 </div>
 
@@ -345,9 +345,9 @@ export function CheckoutForm() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="checkout-name"
-                    className="block text-sm font-medium"
+                    className="block text-base font-bold text-foreground"
                   >
-                    Full Name <span aria-hidden="true">*</span>
+                    Full Name <span aria-hidden="true" className="text-destructive">*</span>
                   </label>
                   <Input
                     id="checkout-name"
@@ -360,13 +360,13 @@ export function CheckoutForm() {
                       errors.customerName ? "checkout-name-error" : undefined
                     }
                     placeholder="Enter your name"
-                    className="h-11 rounded-xl"
+                    className="h-12 rounded-xl text-base font-semibold"
                     {...register("customerName")}
                   />
                   {errors.customerName && (
                     <p
                       id="checkout-name-error"
-                      className="text-xs font-medium text-destructive"
+                      className="text-xs font-bold text-destructive"
                     >
                       {errors.customerName.message}
                     </p>
@@ -377,11 +377,11 @@ export function CheckoutForm() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="checkout-phone"
-                    className="block text-sm font-medium"
+                    className="block text-base font-bold text-foreground"
                   >
-                    Mobile Number <span aria-hidden="true">*</span>
+                    Mobile Number <span aria-hidden="true" className="text-destructive">*</span>
                   </label>
-                  <p id="checkout-phone-hint" className="text-xs text-muted-foreground">
+                  <p id="checkout-phone-hint" className="text-xs font-semibold text-foreground/75">
                     10-digit Indian mobile number (e.g. 9876543210)
                   </p>
                   <Input
@@ -399,13 +399,13 @@ export function CheckoutForm() {
                         : "checkout-phone-hint"
                     }
                     placeholder="9876543210"
-                    className="h-11 rounded-xl"
+                    className="h-12 rounded-xl text-base font-semibold"
                     {...register("customerPhone")}
                   />
                   {errors.customerPhone && (
                     <p
                       id="checkout-phone-error"
-                      className="text-xs font-medium text-destructive"
+                      className="text-xs font-bold text-destructive"
                     >
                       {errors.customerPhone.message}
                     </p>
@@ -416,9 +416,9 @@ export function CheckoutForm() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="checkout-address"
-                    className="block text-sm font-medium"
+                    className="block text-base font-bold text-foreground"
                   >
-                    Full Delivery Address <span aria-hidden="true">*</span>
+                    Full Delivery Address <span aria-hidden="true" className="text-destructive">*</span>
                   </label>
                   <Textarea
                     id="checkout-address"
@@ -431,13 +431,13 @@ export function CheckoutForm() {
                         : undefined
                     }
                     placeholder="House/Flat no., building, street, landmark, pincode"
-                    className="min-h-24 rounded-xl"
+                    className="min-h-24 rounded-xl text-base font-medium"
                     {...register("deliveryAddress")}
                   />
                   {errors.deliveryAddress && (
                     <p
                       id="checkout-address-error"
-                      className="text-xs font-medium text-destructive"
+                      className="text-xs font-bold text-destructive"
                     >
                       {errors.deliveryAddress.message}
                     </p>
@@ -448,24 +448,24 @@ export function CheckoutForm() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="checkout-notes"
-                    className="block text-sm font-medium"
+                    className="block text-base font-bold text-foreground"
                   >
                     Order Notes{" "}
-                    <span className="text-xs font-normal text-muted-foreground">
+                    <span className="text-xs font-semibold text-foreground/70">
                       (optional)
                     </span>
                   </label>
                   <Textarea
                     id="checkout-notes"
                     placeholder="Cooking preferences or delivery instructions..."
-                    className="min-h-18 rounded-xl"
+                    className="min-h-20 rounded-xl text-base font-medium"
                     {...register("notes")}
                   />
                 </div>
 
                 {/* Pre-Order Date & Time */}
                 <fieldset className="space-y-2.5">
-                  <legend className="text-sm font-medium">
+                  <legend className="text-base font-bold text-foreground">
                     Delivery Schedule
                   </legend>
                   <div className="grid grid-cols-2 gap-2.5">
@@ -475,13 +475,13 @@ export function CheckoutForm() {
                         setDeliveryTiming("now");
                         setValue("preorderAt", "", { shouldValidate: true });
                       }}
-                      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors ${
+                      className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-base font-bold transition-colors ${
                         deliveryTiming === "now"
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-muted-foreground hover:bg-muted"
+                          : "border-border bg-background text-foreground/80 hover:bg-muted"
                       }`}
                     >
-                      <Bike className="size-4" aria-hidden="true" />
+                      <Bike className="size-4.5" aria-hidden="true" />
                       <span>Deliver Now</span>
                     </button>
                     <button
@@ -489,36 +489,36 @@ export function CheckoutForm() {
                       onClick={() => {
                         setDeliveryTiming("preorder");
                       }}
-                      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors ${
+                      className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-base font-bold transition-colors ${
                         deliveryTiming === "preorder"
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-muted-foreground hover:bg-muted"
+                          : "border-border bg-background text-foreground/80 hover:bg-muted"
                       }`}
                     >
-                      <CalendarClock className="size-4" aria-hidden="true" />
+                      <CalendarClock className="size-4.5" aria-hidden="true" />
                       <span>Schedule Pre-order</span>
                     </button>
                   </div>
 
                   {deliveryTiming === "preorder" && (
-                    <div className="space-y-1.5 rounded-xl border border-border/70 bg-muted/30 p-3">
+                    <div className="space-y-2 rounded-xl border border-border/70 bg-muted/30 p-3.5">
                       <label
                         htmlFor="checkout-preorder"
-                        className="block text-xs font-medium"
+                        className="block text-sm font-bold text-foreground"
                       >
                         Choose Pre-order Date &amp; Time{" "}
-                        <span aria-hidden="true">*</span>
+                        <span aria-hidden="true" className="text-destructive">*</span>
                       </label>
                       <Input
                         id="checkout-preorder"
                         type="datetime-local"
                         min={minPreorderLocal}
                         aria-invalid={Boolean(errors.preorderAt)}
-                        className="h-11 rounded-xl bg-background"
+                        className="h-12 rounded-xl bg-background text-base font-semibold"
                         {...register("preorderAt")}
                       />
                       {errors.preorderAt && (
-                        <p className="text-xs font-medium text-destructive">
+                        <p className="text-xs font-bold text-destructive">
                           {errors.preorderAt.message}
                         </p>
                       )}
@@ -528,14 +528,14 @@ export function CheckoutForm() {
 
                 {/* Payment Method */}
                 <fieldset className="space-y-2">
-                  <legend className="text-sm font-medium">Payment Method</legend>
-                  <div className="flex min-h-12 items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 px-3.5 py-2.5 text-sm font-medium">
+                  <legend className="text-base font-bold text-foreground">Payment Method</legend>
+                  <div className="flex min-h-12 items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-base font-bold text-foreground">
                     <input
                       type="hidden"
                       {...register("paymentMethod")}
                     />
                     <Banknote
-                      className="size-4 text-primary"
+                      className="size-5 text-primary"
                       aria-hidden="true"
                     />
                     <span>Cash on Delivery</span>
@@ -545,7 +545,7 @@ export function CheckoutForm() {
                 {submitError && (
                   <div
                     role="alert"
-                    className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-xs font-medium text-destructive"
+                    className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3.5 py-3 text-sm font-bold text-destructive"
                   >
                     <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
                     <span>{submitError}</span>
@@ -556,7 +556,7 @@ export function CheckoutForm() {
                   type="submit"
                   size="lg"
                   disabled={orderingDisabled}
-                  className="min-h-12 w-full rounded-xl text-base font-semibold"
+                  className="min-h-13 w-full rounded-xl text-base font-black shadow-md"
                 >
                   {isSubmitting ? (
                     <>
@@ -581,17 +581,17 @@ export function CheckoutForm() {
         <div className="lg:col-span-5">
           <Card className="sticky top-20 rounded-2xl">
             <CardHeader className="border-b border-border/60 pb-3">
-              <CardTitle className="text-base">Bill Summary</CardTitle>
+              <CardTitle className="text-lg font-bold">Bill Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-4 sm:p-5">
-              <ul className="space-y-2.5 text-sm">
+              <ul className="space-y-3 text-base">
                 {items.map((item) => (
                   <li
                     key={item.id}
                     className="flex items-start justify-between gap-2"
                   >
                     <div className="min-w-0">
-                      <span className="text-muted-foreground">
+                      <span className="font-bold text-foreground">
                         {item.quantity}x {item.name}
                         {item.variantLabel ? ` (${item.variantLabel})` : ""}
                       </span>
@@ -599,7 +599,7 @@ export function CheckoutForm() {
                         item.eggPreference ||
                         item.cakeMessage ||
                         item.customImageUrl) && (
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs font-semibold text-foreground/80">
                           {[
                             item.selectedFlavour,
                             item.eggPreference,
@@ -613,31 +613,31 @@ export function CheckoutForm() {
                         </p>
                       )}
                     </div>
-                    <span className="shrink-0 font-medium tabular-nums">
+                    <span className="shrink-0 font-extrabold tabular-nums text-foreground">
                       {formatPrice(item.unitPrice * item.quantity)}
                     </span>
                   </li>
                 ))}
               </ul>
 
-              <div className="space-y-2 border-t border-border/60 pt-3 text-sm">
+              <div className="space-y-2 border-t border-border/60 pt-3 text-base">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium tabular-nums">
+                  <span className="font-semibold text-foreground/80">Subtotal</span>
+                  <span className="font-bold tabular-nums text-foreground">
                     {formatPrice(subtotal)}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Delivery fee</span>
-                  <span className="font-medium tabular-nums">
+                  <span className="font-semibold text-foreground/80">Delivery fee</span>
+                  <span className="font-bold tabular-nums text-foreground">
                     {loadingSettings
                       ? "..."
                       : formatPrice(appliedDeliveryFee)}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-border/60 pt-2.5 text-base font-bold">
+                <div className="flex items-center justify-between border-t border-border/60 pt-3 text-xl font-black text-foreground">
                   <span>Total</span>
                   <span className="tabular-nums">{formatPrice(total)}</span>
                 </div>
@@ -646,7 +646,7 @@ export function CheckoutForm() {
               {minOrderNotMet && (
                 <div
                   role="status"
-                  className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-medium text-amber-900 dark:text-amber-200"
+                  className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm font-bold text-amber-950 dark:text-amber-100"
                 >
                   <AlertCircle
                     className="mt-0.5 size-4 shrink-0"

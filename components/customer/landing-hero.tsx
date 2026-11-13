@@ -73,20 +73,20 @@ export function LandingHero() {
           />
           <Badge
             variant="secondary"
-            className="hero-fade-up inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-medium tracking-wide"
+            className="hero-fade-up inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold tracking-wide"
           >
             <Sparkles
-              className="size-3.5 text-amber-600 dark:text-amber-400"
+              className="size-4 text-amber-600 dark:text-amber-400"
               aria-hidden="true"
             />
             <span>Freshly Baked Daily</span>
           </Badge>
 
-          <h1 className="hero-fade-up hero-delay-1 font-heading text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+          <h1 className="hero-fade-up hero-delay-1 font-heading text-4xl font-black tracking-tight text-foreground sm:text-5xl md:text-6xl">
             {RESTAURANT_CONFIG.name}
           </h1>
 
-          <p className="hero-fade-up hero-delay-2 mx-auto max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+          <p className="hero-fade-up hero-delay-2 mx-auto max-w-xl text-lg font-semibold leading-relaxed text-foreground/80 sm:text-xl">
             {RESTAURANT_CONFIG.tagline}
           </p>
         </div>
@@ -95,25 +95,25 @@ export function LandingHero() {
           <button
             type="button"
             onClick={handleSelectDelivery}
-            className="hero-card-enter hero-delay-2 group relative flex min-h-44 w-full flex-col justify-between rounded-2xl border border-border/80 bg-card/90 p-6 text-left shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-1 hover:border-emerald-500/50 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.985]"
+            className="hero-card-enter hero-delay-2 group relative flex min-h-48 w-full flex-col justify-between rounded-2xl border border-border/80 bg-card/90 p-6 text-left shadow-md ring-1 ring-foreground/5 backdrop-blur-sm transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-1 hover:border-emerald-500/50 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.985]"
           >
             <div className="flex items-start justify-between gap-4">
               <span
                 aria-hidden="true"
-                className="flex size-13 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600 ring-1 ring-emerald-500/25 transition-transform duration-200 group-hover:scale-105 dark:bg-emerald-400/15 dark:text-emerald-400"
+                className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600 ring-1 ring-emerald-500/25 transition-transform duration-200 group-hover:scale-105 dark:bg-emerald-400/15 dark:text-emerald-400"
               >
-                <Bike className="size-6" />
+                <Bike className="size-7" />
               </span>
-              <span className="inline-flex size-9 items-center justify-center rounded-full bg-muted/80 text-muted-foreground transition-[transform,background-color,color] duration-200 group-hover:translate-x-0.5 group-hover:bg-emerald-600 group-hover:text-white">
-                <ArrowRight className="size-4" aria-hidden="true" />
+              <span className="inline-flex size-10 items-center justify-center rounded-full bg-muted text-foreground transition-[transform,background-color,color] duration-200 group-hover:translate-x-0.5 group-hover:bg-emerald-600 group-hover:text-white">
+                <ArrowRight className="size-5" aria-hidden="true" />
               </span>
             </div>
 
             <div className="mt-5 space-y-1.5">
-              <h2 className="font-heading text-xl font-semibold tracking-tight text-card-foreground sm:text-2xl">
+              <h2 className="font-heading text-2xl font-black tracking-tight text-card-foreground sm:text-3xl">
                 Order for Delivery
               </h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="text-base font-semibold leading-relaxed text-foreground/80">
                 Browse the menu and get fresh favorites delivered right to your
                 doorstep.
               </p>
