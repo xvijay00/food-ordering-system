@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bike } from "lucide-react";
+import { Bike, Phone } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
 import { CUSTOMER_NAV_ITEMS } from "@/components/customer/nav-items";
@@ -58,6 +58,16 @@ export function CustomerHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <a
+            href={`tel:${RESTAURANT_CONFIG.phone}`}
+            aria-label={`Call ${RESTAURANT_CONFIG.name} at ${RESTAURANT_CONFIG.phone}`}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <Phone className="size-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">Call:</span>
+            <span>{RESTAURANT_CONFIG.phone}</span>
+          </a>
+
           <Badge
             variant="secondary"
             className="hidden gap-1.5 px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-200 sm:inline-flex"

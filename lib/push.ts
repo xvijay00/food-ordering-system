@@ -8,10 +8,17 @@ type PushPayload = {
   url?: string;
 };
 
+const DEFAULT_VAPID_PUBLIC_KEY =
+  "BLEyPJIe_IAvGy7mj19FsVJjUcREqPYSstTiGBeh3UB4t0oV0PQ7Kb3FKfv-aCwq7v6h7bLBVNyrrFl_b9qR7X0";
+const DEFAULT_VAPID_PRIVATE_KEY =
+  "d4oEPwHxaN6Ji_hG-M7HVLMIXWjh3OXkrL1gCf8Hlxk";
+const DEFAULT_VAPID_SUBJECT = "mailto:orders@bakersnation.in";
+
 function configureVapid(): boolean {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT;
+  const publicKey =
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY || DEFAULT_VAPID_PRIVATE_KEY;
+  const subject = process.env.VAPID_SUBJECT || DEFAULT_VAPID_SUBJECT;
 
   if (!publicKey || !privateKey || !subject) {
     return false;

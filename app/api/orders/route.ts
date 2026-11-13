@@ -638,11 +638,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Best-effort staff Web Push notification
+    // Best-effort staff Web Push notification for lock-screen alert
     void sendStaffOrderPush({
-      title: `New Order #${createdOrder.order_no}`,
-      body: `Delivery order · ₹${total}`,
-      url: "/admin/orders",
+      title: `🔔 New Order #${createdOrder.order_no} Received from ${resolvedName || "Customer"}! (₹${total})`,
+      body: `${orderItemSnapshots.length} items ordered · Tap to view & accept order`,
+      url: "/admin/orders?alert=1",
     });
 
     logger.info("Order placed successfully", {

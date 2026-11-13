@@ -134,3 +134,69 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
+/* ============================================================
+ * WEB PUSH NOTIFICATIONS FOR LOCK SCREEN ORDER ALERTS
+ * Plays 3-second vibration and sounds notification ringtone,
+ * waking the phone lock screen even when app is closed.
+ * ============================================================ */
+
+self.addEventListener("push", (event: PushEvent) => {
+  let data: { title?: string; body?: string; url?: string } = {};
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data = {
+        title: "🔔 New Order - Baker's Nation",
+        body: event.data.text(),
+        url: "/admin/orders?alert=1",
+      };
+    }
+  }
+
+  const title = data.title || "🔔 New Order Received - Baker's Nation";
+  const body = data.body || "Tap to view full order details.";
+  const url = data.url || "/admin/orders?alert=1";
+
+  const options = {
+    body,
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-192x192.png",
+    // 3 seconds total penetrating vibration pattern [vibrate, pause, vibrate, pause, vibrate]
+    vibrate: [500, 250, 500, 250, 1000],
+    tag: "bakers-order-alert",
+    renotify: true,
+    requireInteraction: true,
+    data: {
+      url,
+      timestamp: Date.now(),
+    },
+  } as unknown as NotificationOptions;
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || "/admin/orders?alert=1";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      // 1. If an admin orders window is already open, focus it and trigger the doorbell
+      for (const client of clientList) {
+        if ("focus" in client && client.url.includes("/admin/orders")) {
+          client.postMessage({ type: "PLAY_ORDER_BELL" });
+          return client.focus();
+        }
+      }
+
+      // 2. Otherwise open a fresh window with ?alert=1 to ring the doorbell on load
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
