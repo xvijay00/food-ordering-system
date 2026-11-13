@@ -101,7 +101,7 @@ flowchart TD
 
 #### A. Live Orders Kanban (`/admin/orders`)
 - Realtime polling and Supabase Postgres changes subscription.
-- Audio bell notifications on incoming orders.
+- Audio bell notifications on incoming orders: Synthesizes a loud, harmonic 3-second chime (Ding-Ding-Dong at 0s, 1s, 2s) via Web Audio API + /bell.mp3 fallback with mobile haptic vibration and an interactive "Test Sound" control.
 - Role-based transition actions:
   - Admin: Can confirm, cancel, advance, or mark delivered.
   - Kitchen Staff: Can advance preparation states.

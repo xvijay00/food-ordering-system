@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import {
+  Bell,
+  BellOff,
   RefreshCw,
+  Volume2,
   Wifi,
   WifiOff,
 } from "lucide-react";
@@ -21,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { playOrderAlertBell, unlockAudioSystem } from "@/lib/order-audio";
 import { createClient } from "@/lib/supabase-browser";
 import type { OrderWithItems, StaffRole } from "@/types/database";
 
@@ -92,7 +96,8 @@ export function LiveOrdersBoard({
   );
   const [rejectReason, setRejectReason] = React.useState("");
 
-  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [soundEnabled, setSoundEnabled] = React.useState(true);
+  const [isPlayingTest, setIsPlayingTest] = React.useState(false);
 
   // Tick relative timestamps every 30 seconds
   React.useEffect(() => {
@@ -101,13 +106,19 @@ export function LiveOrdersBoard({
   }, []);
 
   const playOrderBell = React.useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = 0;
-    void audio.play().catch(() => {
-      // Ignore if /public/bell.mp3 has not been added yet
+    if (!soundEnabled) return;
+    playOrderAlertBell();
+  }, [soundEnabled]);
+
+  const handleTestBell = () => {
+    unlockAudioSystem();
+    setIsPlayingTest(true);
+    playOrderAlertBell();
+    toast.success("🔔 Order Alert Bell ringing for 3 seconds!", {
+      duration: 3500,
     });
-  }, []);
+    window.setTimeout(() => setIsPlayingTest(false), 3000);
+  };
 
   const fetchSingleOrder = React.useCallback(
     async (orderId: string): Promise<OrderWithItems | null> => {
@@ -155,42 +166,18 @@ export function LiveOrdersBoard({
     }, 4500);
   }, []);
 
-  // Prepare audio element and silently unlock playback on first user interaction
+  // Unlock audio system on first user click or keypress
   React.useEffect(() => {
-    let audio: HTMLAudioElement | null = null;
-    try {
-      audio = new Audio("/bell.mp3");
-      audio.preload = "auto";
-      audioRef.current = audio;
-    } catch {
-      return;
-    }
-
-    const unlockAudio = () => {
-      if (!audio) return;
-      audio.muted = true;
-      void audio
-        .play()
-        .then(() => {
-          audio?.pause();
-          if (audio) {
-            audio.currentTime = 0;
-            audio.muted = false;
-          }
-        })
-        .catch(() => {
-          if (audio) {
-            audio.muted = false;
-          }
-        });
+    const unlock = () => {
+      unlockAudioSystem();
     };
 
-    window.addEventListener("pointerdown", unlockAudio, { once: true });
-    window.addEventListener("keydown", unlockAudio, { once: true });
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
 
     return () => {
-      window.removeEventListener("pointerdown", unlockAudio);
-      window.removeEventListener("keydown", unlockAudio);
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
     };
   }, []);
 
@@ -218,7 +205,10 @@ export function LiveOrdersBoard({
           });
 
           markHighlighted(fullOrder.id);
-          toast.info(`New order #${fullOrder.order_no} received!`);
+          toast.info(`🔔 New order #${fullOrder.order_no} received!`, {
+            description: `${fullOrder.customer_name || "Guest"} • ₹${fullOrder.total}`,
+            duration: 6000,
+          });
           playOrderBell();
         }
       )
@@ -340,20 +330,72 @@ export function LiveOrdersBoard({
           )}
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={refreshing}
-          onClick={() => void fetchAllOrders(false)}
-          className="min-h-10 gap-2 rounded-xl"
-        >
-          <RefreshCw
-            className={`size-4 ${refreshing ? "animate-spin" : ""}`}
-            aria-hidden="true"
-          />
-          <span>Refresh</span>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 3-Second Sound Alert Controls */}
+          <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-background/80 p-1 shadow-sm backdrop-blur-xs">
+            <Button
+              type="button"
+              variant={soundEnabled ? "default" : "secondary"}
+              size="sm"
+              onClick={() => {
+                unlockAudioSystem();
+                setSoundEnabled((prev) => {
+                  const next = !prev;
+                  if (next) {
+                    toast.success("Sound alerts enabled (3s bell chime)");
+                  } else {
+                    toast.info("Sound alerts muted");
+                  }
+                  return next;
+                });
+              }}
+              className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-semibold"
+              title={soundEnabled ? "Mute order sound" : "Enable order sound"}
+            >
+              {soundEnabled ? (
+                <>
+                  <Bell className={`size-3.5 ${isPlayingTest ? "animate-bounce text-amber-300" : ""}`} />
+                  <span>Bell 3s ON</span>
+                </>
+              ) : (
+                <>
+                  <BellOff className="size-3.5 text-muted-foreground" />
+                  <span>Muted</span>
+                </>
+              )}
+            </Button>
+
+            {soundEnabled && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={isPlayingTest}
+                onClick={handleTestBell}
+                className="h-8 gap-1 rounded-lg px-2 text-xs font-medium text-foreground hover:bg-muted"
+                title="Test 3-second order alert ring"
+              >
+                <Volume2 className={`size-3.5 ${isPlayingTest ? "animate-pulse text-amber-500" : ""}`} />
+                <span>{isPlayingTest ? "Ringing..." : "Test"}</span>
+              </Button>
+            )}
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={refreshing}
+            onClick={() => void fetchAllOrders(false)}
+            className="min-h-10 gap-2 rounded-xl"
+          >
+            <RefreshCw
+              className={`size-4 ${refreshing ? "animate-spin" : ""}`}
+              aria-hidden="true"
+            />
+            <span>Refresh</span>
+          </Button>
+        </div>
       </div>
 
       {/* Desktop Kanban Board */}
