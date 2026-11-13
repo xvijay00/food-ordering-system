@@ -114,7 +114,7 @@ export function LiveOrdersBoard({
     unlockAudioSystem();
     setIsPlayingTest(true);
     playOrderAlertBell();
-    toast.success("🔔 Order Alert Bell ringing for 3 seconds!", {
+    toast.success("🔔 Doorbell ringing: Ding-Dong! (3 seconds)", {
       duration: 3500,
     });
     window.setTimeout(() => setIsPlayingTest(false), 3000);
@@ -342,7 +342,7 @@ export function LiveOrdersBoard({
                 setSoundEnabled((prev) => {
                   const next = !prev;
                   if (next) {
-                    toast.success("Sound alerts enabled (3s bell chime)");
+                    toast.success("Doorbell sound alerts enabled (3s Ding-Dong)");
                   } else {
                     toast.info("Sound alerts muted");
                   }
