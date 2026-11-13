@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test tests/unit/*.test.mjs tests/integration/*.test.mjs",
+    "test:concurrency": "node --env-file=.env.local tests/concurrency/concurrent-checkout.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",

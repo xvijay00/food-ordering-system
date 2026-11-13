@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { fetchAdminOrderById } from "@/lib/bakery-queries";
 import { getStaff } from "@/lib/get-staff";
+import { logger } from "@/lib/logger";
 import { canRoleTransitionOrder } from "@/lib/order-transitions";
 import { createAdminClient } from "@/lib/supabase-admin";
 import type { TablesUpdate } from "@/types/database";
@@ -118,6 +119,56 @@ export async function PATCH(
         { error: updateError.message ?? "Failed to update order status." },
         { status: 500 }
       );
+    }
+
+    // Automatically restore inventory when an active order is cancelled
+    if (targetStatus === "cancelled" && existingOrder.status !== "cancelled") {
+      try {
+        const { data: cancelledItems } = await admin
+          .from("order_items")
+          .select("menu_item_id, quantity")
+          .eq("order_id", existingOrder.id);
+
+        if (cancelledItems && cancelledItems.length > 0) {
+          for (const ci of cancelledItems) {
+            if (!ci.menu_item_id) continue;
+            const { data: currentItem } = await admin
+              .from("menu_items")
+              .select("id, stock_quantity")
+              .eq("id", ci.menu_item_id)
+              .maybeSingle();
+
+            if (
+              currentItem &&
+              currentItem.stock_quantity !== null &&
+              currentItem.stock_quantity !== undefined
+            ) {
+              const restoredStock =
+                Number(currentItem.stock_quantity) + ci.quantity;
+              await admin
+                .from("menu_items")
+                .update({
+                  stock_quantity: restoredStock,
+                  is_available: true,
+                })
+                .eq("id", ci.menu_item_id);
+
+              logger.info("Restocked cancelled order item", {
+                orderId: existingOrder.id,
+                menuItemId: ci.menu_item_id,
+                restoredQuantity: ci.quantity,
+                newStock: restoredStock,
+              });
+            }
+          }
+        }
+      } catch (restockErr) {
+        logger.error(
+          "Failed to restock items for cancelled order",
+          restockErr,
+          { orderId: existingOrder.id }
+        );
+      }
     }
 
     const { error: historyError } = await admin

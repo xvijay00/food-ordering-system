@@ -39,6 +39,7 @@ const orderBaseFields = {
     .nullable()
     .optional()
     .or(z.literal("")),
+  idempotencyKey: z.string().trim().max(128).optional(),
 };
 
 function validateOrderDetails(

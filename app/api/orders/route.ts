@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getEffectiveBasePrice } from "@/lib/bakery-constants";
 import { isMissingColumnError } from "@/lib/bakery-queries";
+import { logger } from "@/lib/logger";
 import { sendStaffOrderPush } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { placeOrderSchema } from "@/lib/validations";
@@ -22,8 +23,6 @@ type MenuRowWithOptions = {
   item_addons: { id: string; name: string; price: number; is_active: boolean }[];
 };
 
-// TODO: Replace in-memory Map rate limiter with Upstash Redis (@upstash/ratelimit)
-// before deploying across multiple serverless/edge instances.
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_ORDERS = 5;
 const orderRateLimitStore = new Map<string, number[]>();
@@ -73,12 +72,17 @@ function parseBool(value: unknown, fallback: boolean): boolean {
 }
 
 export async function POST(request: Request) {
+  const startTime = Date.now();
+  const requestId =
+    request.headers.get("x-request-id") || crypto.randomUUID();
+
   try {
     // 1. Parse and strictly validate request body with Zod
     let body: unknown;
     try {
       body = await request.json();
     } catch {
+      logger.warn("Order request failed: invalid JSON body", { requestId });
       return NextResponse.json(
         { error: "Invalid request body. Please send valid JSON." },
         { status: 400 }
@@ -87,6 +91,10 @@ export async function POST(request: Request) {
 
     const parsed = placeOrderSchema.safeParse(body);
     if (!parsed.success) {
+      logger.warn("Order validation failed", {
+        requestId,
+        issues: parsed.error.issues,
+      });
       return NextResponse.json(
         {
           error: parsed.error.issues[0]?.message ?? "Invalid order details.",
@@ -98,14 +106,115 @@ export async function POST(request: Request) {
 
     const input = parsed.data;
     const admin = createAdminClient();
+    const resolvedPhone = input.customerPhone?.trim() || "N/A";
+    const resolvedName = input.customerName?.trim() || "Guest";
+    const idempotencyKey =
+      input.idempotencyKey?.trim() ||
+      request.headers.get("x-idempotency-key")?.trim() ||
+      null;
 
-    // 2. Read shop settings: reject with 403 if shop_open is false
+    // 2. IDEMPOTENCY CHECK: Prevent duplicate orders from double-clicks or retries
+    if (idempotencyKey) {
+      try {
+        const { data: existingByKey } = await admin
+          .from("orders")
+          .select("id, order_token, order_no")
+          .eq("idempotency_key" as "id", idempotencyKey as string)
+          .maybeSingle();
+
+        if (existingByKey) {
+          logger.info("Duplicate order prevented via idempotency_key", {
+            requestId,
+            idempotencyKey,
+            orderNo: existingByKey.order_no,
+            durationMs: Date.now() - startTime,
+          });
+          return NextResponse.json({
+            orderToken: existingByKey.order_token,
+            orderNo: existingByKey.order_no,
+          });
+        }
+      } catch {
+        // Fallback gracefully if idempotency_key column has not been added to DB yet
+      }
+
+      // Secondary check: look for recent order with matching idempotency marker in notes
+      if (resolvedPhone !== "N/A") {
+        const recentWindow = new Date(Date.now() - 60 * 1000).toISOString();
+        const { data: recentOrders } = await admin
+          .from("orders")
+          .select("id, order_token, order_no, notes")
+          .eq("customer_phone", resolvedPhone)
+          .gte("created_at", recentWindow)
+          .limit(5);
+
+        const matched = recentOrders?.find((o) =>
+          o.notes?.includes(`[idem:${idempotencyKey}]`)
+        );
+        if (matched) {
+          logger.info("Duplicate order prevented via recent window check", {
+            requestId,
+            idempotencyKey,
+            orderNo: matched.order_no,
+            durationMs: Date.now() - startTime,
+          });
+          return NextResponse.json({
+            orderToken: matched.order_token,
+            orderNo: matched.order_no,
+          });
+        }
+      }
+    }
+
+    // 3. PERSISTENT RATE LIMIT CHECK (Phone-level & IP-level)
+    if (resolvedPhone !== "N/A") {
+      const tenMinutesAgo = new Date(
+        Date.now() - RATE_LIMIT_WINDOW_MS
+      ).toISOString();
+      const { count: phoneOrderCount } = await admin
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("customer_phone", resolvedPhone)
+        .gte("created_at", tenMinutesAgo);
+
+      if (phoneOrderCount !== null && phoneOrderCount >= RATE_LIMIT_MAX_ORDERS) {
+        logger.warn("Order rate limit exceeded for customer phone", {
+          requestId,
+          phone: resolvedPhone,
+          phoneOrderCount,
+        });
+        return NextResponse.json(
+          {
+            error:
+              "Too many orders placed from this mobile number recently. Please wait a few minutes and try again.",
+          },
+          { status: 429 }
+        );
+      }
+    }
+
+    const clientIp = getClientIp(request);
+    if (!checkAndRecordRateLimit(clientIp)) {
+      logger.warn("Order rate limit exceeded for IP", { requestId, clientIp });
+      return NextResponse.json(
+        {
+          error:
+            "Too many orders placed from your network. Please wait a few minutes and try again.",
+        },
+        { status: 429 }
+      );
+    }
+
+    // 4. Read shop settings: reject with 403 if shop_open is false
     const { data: settingsRows, error: settingsError } = await admin
       .from("settings")
       .select("key, value")
       .in("key", ["delivery_fee", "min_order", "shop_open"]);
 
     if (settingsError) {
+      logger.error("Could not read restaurant settings", settingsError, {
+        requestId,
+      });
       return NextResponse.json(
         { error: "Could not read restaurant settings. Please try again." },
         { status: 500 }
@@ -126,7 +235,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Fetch all referenced menu_items, item_variants, and item_addons
+    // 5. Fetch all referenced menu_items, item_variants, and item_addons
     const uniqueMenuIds = [
       ...new Set(input.items.map((item) => item.menuItemId)),
     ];
@@ -151,6 +260,7 @@ export async function POST(request: Request) {
     }
 
     if (menuError) {
+      logger.error("Could not load menu items", menuError, { requestId });
       return NextResponse.json(
         { error: "Could not load menu items. Please try again." },
         { status: 500 }
@@ -161,7 +271,7 @@ export async function POST(request: Request) {
       ((menuRows ?? []) as MenuRowWithOptions[]).map((row) => [row.id, row])
     );
 
-    // Check total requested quantity per menuItemId against stock_quantity
+    // Group total requested quantity per menuItemId
     const requestedQtyByMenuId = new Map<string, number>();
     for (const reqItem of input.items) {
       requestedQtyByMenuId.set(
@@ -170,31 +280,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Verify availability, stock, and recalculate all prices on the server
+    // 6. Recalculate all prices strictly on server
     let subtotal = 0;
     const orderItemSnapshots: Omit<TablesInsert<"order_items">, "order_id">[] =
       [];
-
-    for (const [menuId, totalQty] of requestedQtyByMenuId.entries()) {
-      const menuItem = menuMap.get(menuId);
-      if (
-        menuItem &&
-        menuItem.stock_quantity !== null &&
-        menuItem.stock_quantity !== undefined &&
-        totalQty > Number(menuItem.stock_quantity)
-      ) {
-        const left = Math.max(0, Number(menuItem.stock_quantity));
-        return NextResponse.json(
-          {
-            error:
-              left === 0
-                ? `"${menuItem.name}" is out of stock.`
-                : `Only ${left} left in stock for "${menuItem.name}".`,
-          },
-          { status: 400 }
-        );
-      }
-    }
 
     for (const reqItem of input.items) {
       const menuItem = menuMap.get(reqItem.menuItemId);
@@ -297,27 +386,120 @@ export async function POST(request: Request) {
     const deliveryFee = deliveryFeeSetting;
     const total = Number((subtotal + deliveryFee).toFixed(2));
 
-    // 5. Rate limit: max 5 orders per IP per 10 minutes
-    const clientIp = getClientIp(request);
-    if (!checkAndRecordRateLimit(clientIp)) {
-      return NextResponse.json(
-        {
-          error:
-            "Too many orders placed from your network. Please wait a few minutes and try again.",
-        },
-        { status: 429 }
-      );
-    }
-
-    const resolvedName = input.customerName?.trim() || "Guest";
-    const resolvedPhone = input.customerPhone?.trim() || "N/A";
     const resolvedPreorderAt =
       input.preorderAt && input.preorderAt.trim().length > 0
         ? new Date(input.preorderAt.trim()).toISOString()
         : null;
 
-    // 6. Insert into orders, order_items, and order_status_history (rollback on error)
-    const orderPayload: TablesInsert<"orders"> = {
+    // 7. ATOMIC CONDITIONAL INVENTORY RESERVATION (Race-condition safe via OCC)
+    const reservedItems: { id: string; qty: number; initialStock: number }[] = [];
+    if (bakeryColumnsAvailable) {
+      for (const [menuId, orderedQty] of requestedQtyByMenuId.entries()) {
+        const menuItem = menuMap.get(menuId);
+        if (
+          menuItem &&
+          menuItem.stock_quantity !== null &&
+          menuItem.stock_quantity !== undefined
+        ) {
+          let reserved = false;
+          const MAX_OCC_RETRIES = 4;
+
+          for (let attempt = 0; attempt < MAX_OCC_RETRIES; attempt++) {
+            const { data: freshItem, error: fetchErr } = await admin
+              .from("menu_items")
+              .select("id, name, stock_quantity, is_available")
+              .eq("id", menuId)
+              .single();
+
+            if (fetchErr || !freshItem) {
+              break;
+            }
+
+            const currentStock = Number(freshItem.stock_quantity ?? 0);
+            if (currentStock < orderedQty) {
+              break;
+            }
+
+            const nextStock = Math.max(0, currentStock - orderedQty);
+            // Optimistic concurrency guard: update only if stock_quantity is STILL currentStock
+            const { data: updatedItem, error: updateErr } = await admin
+              .from("menu_items")
+              .update({
+                stock_quantity: nextStock,
+                is_available: nextStock > 0 ? freshItem.is_available : false,
+              })
+              .eq("id", menuId)
+              .eq("stock_quantity", currentStock)
+              .select("id, stock_quantity");
+
+            if (!updateErr && updatedItem && updatedItem.length > 0) {
+              reserved = true;
+              reservedItems.push({
+                id: menuId,
+                qty: orderedQty,
+                initialStock: currentStock,
+              });
+              break;
+            }
+
+            // Stale snapshot caused by concurrent checkout; retry with small jitter
+            await new Promise((resolve) =>
+              setTimeout(resolve, Math.random() * 25 + 10)
+            );
+          }
+
+          if (!reserved) {
+            logger.warn(
+              "Inventory reservation failed: item depleted concurrently",
+              {
+                requestId,
+                menuItemId: menuId,
+                requestedQty: orderedQty,
+              }
+            );
+
+            // Roll back any previously reserved items in this order
+            for (const r of reservedItems) {
+              await admin
+                .from("menu_items")
+                .update({ stock_quantity: r.initialStock, is_available: true })
+                .eq("id", r.id);
+            }
+
+            return NextResponse.json(
+              {
+                error: `"${menuItem.name}" was just reserved by another customer. Please refresh and check availability.`,
+              },
+              { status: 409 }
+            );
+          }
+        }
+      }
+    }
+
+    // Helper to rollback reserved inventory if order insertion fails
+    const rollbackInventory = async () => {
+      for (const r of reservedItems) {
+        try {
+          await admin
+            .from("menu_items")
+            .update({ stock_quantity: r.initialStock, is_available: true })
+            .eq("id", r.id);
+        } catch (rbErr) {
+          logger.error("Failed to rollback stock after order failure", rbErr, {
+            requestId,
+            menuItemId: r.id,
+          });
+        }
+      }
+    };
+
+    // 8. Insert order record (with idempotency marker embedded if column missing)
+    const notesWithMarker = idempotencyKey
+      ? [input.notes?.trim(), `[idem:${idempotencyKey}]`].filter(Boolean).join(" ")
+      : input.notes?.trim() || null;
+
+    const orderPayload: TablesInsert<"orders"> & { idempotency_key?: string | null } = {
       order_type: "delivery",
       table_id: null,
       customer_name: resolvedName,
@@ -329,7 +511,8 @@ export async function POST(request: Request) {
       subtotal,
       delivery_fee: deliveryFee,
       total,
-      notes: input.notes?.trim() || null,
+      notes: notesWithMarker,
+      ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
       ...(bakeryColumnsAvailable && resolvedPreorderAt
         ? { preorder_at: resolvedPreorderAt }
         : {}),
@@ -337,16 +520,20 @@ export async function POST(request: Request) {
 
     let { data: createdOrder, error: orderInsertError } = await admin
       .from("orders")
-      .insert(orderPayload)
+      .insert(orderPayload as TablesInsert<"orders">)
       .select("id, order_token, order_no")
       .single();
 
     if (orderInsertError && isMissingColumnError(orderInsertError)) {
-      const { preorder_at: _ignored, ...baseOrderPayload } = orderPayload;
+      // Retry without optional columns if schema migration is pending
+      const { preorder_at: _ignored, idempotency_key: _ik, ...baseOrderPayload } =
+        orderPayload;
       void _ignored;
+      void _ik;
+
       const retry = await admin
         .from("orders")
-        .insert(baseOrderPayload)
+        .insert(baseOrderPayload as TablesInsert<"orders">)
         .select("id, order_token, order_no")
         .single();
       createdOrder = retry.data;
@@ -354,12 +541,15 @@ export async function POST(request: Request) {
     }
 
     if (orderInsertError || !createdOrder) {
+      await rollbackInventory();
+      logger.error("Failed to insert order", orderInsertError, { requestId });
       return NextResponse.json(
         { error: "Failed to place your order. Please try again." },
         { status: 500 }
       );
     }
 
+    // 9. Insert order items
     const orderItemsToInsert = orderItemSnapshots.map((item) => ({
       ...item,
       order_id: createdOrder.id,
@@ -391,12 +581,15 @@ export async function POST(request: Request) {
 
     if (itemsInsertError) {
       await admin.from("orders").delete().eq("id", createdOrder.id);
+      await rollbackInventory();
+      logger.error("Failed to save order items", itemsInsertError, { requestId });
       return NextResponse.json(
         { error: "Failed to save your order items. Please try again." },
         { status: 500 }
       );
     }
 
+    // 10. Insert initial order status history
     const { error: historyInsertError } = await admin
       .from("order_status_history")
       .insert({
@@ -407,31 +600,14 @@ export async function POST(request: Request) {
 
     if (historyInsertError) {
       await admin.from("orders").delete().eq("id", createdOrder.id);
+      await rollbackInventory();
+      logger.error("Failed to initialize order tracking", historyInsertError, {
+        requestId,
+      });
       return NextResponse.json(
         { error: "Failed to initialize order tracking. Please try again." },
         { status: 500 }
       );
-    }
-
-    // Best-effort stock decrement
-    if (bakeryColumnsAvailable) {
-      for (const [menuId, orderedQty] of requestedQtyByMenuId.entries()) {
-        const menuItem = menuMap.get(menuId);
-        if (
-          menuItem &&
-          menuItem.stock_quantity !== null &&
-          menuItem.stock_quantity !== undefined
-        ) {
-          const nextStock = Math.max(0, Number(menuItem.stock_quantity) - orderedQty);
-          await admin
-            .from("menu_items")
-            .update({
-              stock_quantity: nextStock,
-              is_available: nextStock > 0 ? menuItem.is_available : false,
-            })
-            .eq("id", menuId);
-        }
-      }
     }
 
     // Best-effort staff Web Push notification
@@ -441,7 +617,15 @@ export async function POST(request: Request) {
       url: "/admin/orders",
     });
 
-    // 8. Return { orderToken, orderNo }
+    logger.info("Order placed successfully", {
+      requestId,
+      orderNo: createdOrder.order_no,
+      orderId: createdOrder.id,
+      total,
+      durationMs: Date.now() - startTime,
+    });
+
+    // 11. Return { orderToken, orderNo }
     return NextResponse.json(
       {
         orderToken: createdOrder.order_token,
@@ -449,7 +633,8 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch {
+  } catch (err) {
+    logger.error("Unhandled exception in order placement", err, { requestId });
     return NextResponse.json(
       { error: "Something went wrong while placing your order." },
       { status: 500 }

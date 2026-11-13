@@ -90,6 +90,14 @@ export function CheckoutForm() {
     formState: { errors, isSubmitting },
   } = form;
 
+  const idempotencyKeyRef = React.useRef<string>("");
+  if (!idempotencyKeyRef.current) {
+    idempotencyKeyRef.current =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  }
+
   // Enforce delivery mode and sync persisted notes on hydration
   React.useEffect(() => {
     if (!hydrated) return;
@@ -210,6 +218,7 @@ export function CheckoutForm() {
         notes: values.notes?.trim() || "",
         preorderAt: preorderIso,
         paymentMethod: "cod" as const,
+        idempotencyKey: idempotencyKeyRef.current,
         items: items.map((item) => {
           const addonIds = item.addons
             .map((addon) => addon.id)

@@ -69,3 +69,21 @@ where not exists (
   select 1 from public.categories c where lower(c.name) = lower(v.name)
 );
 
+-- 5. Performance Indexes & Idempotency
+alter table public.orders
+  add column if not exists idempotency_key text;
+
+create unique index if not exists idx_orders_idempotency_key
+  on public.orders(idempotency_key)
+  where idempotency_key is not null;
+
+create index if not exists idx_order_items_menu_item_id
+  on public.order_items(menu_item_id);
+
+create index if not exists idx_orders_status_created_at
+  on public.orders(status, created_at desc);
+
+create index if not exists idx_orders_customer_phone_created_at
+  on public.orders(customer_phone, created_at desc);
+
+

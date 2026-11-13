@@ -10,6 +10,13 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/avif",
 ]);
 
+const MIME_TO_EXTENSION: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/avif": "avif",
+};
+
 export async function uploadImageFromFormData(
   request: Request,
   folder: "items" | "custom-cakes"
@@ -39,7 +46,7 @@ export async function uploadImageFromFormData(
       );
     }
 
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const ext = MIME_TO_EXTENSION[file.type] || "jpg";
     const filePath = `${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
     const arrayBuffer = await file.arrayBuffer();
 
