@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  BookUser,
   ClipboardList,
   ExternalLink,
   LogOut,
@@ -37,6 +38,12 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     label: "Orders",
     icon: ClipboardList,
     roles: ["admin", "kitchen", "delivery"],
+  },
+  {
+    href: "/admin/clients",
+    label: "Clients",
+    icon: BookUser,
+    roles: ["admin", "kitchen"],
   },
   {
     href: "/admin/menu",

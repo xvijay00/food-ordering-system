@@ -107,7 +107,13 @@ flowchart TD
   - Kitchen Staff: Can advance preparation states.
   - Delivery Staff: Can view delivery address and mark delivered.
 
-#### B. Menu & Stock Management (`/admin/menu` & `/admin/birthday`)
+#### B. Client Records & CRM (`/admin/clients`)
+- **Customer Directory & Logs**: Tracks who ordered what, exact order dates (IST), full item breakdown, flavours, cake messages, and delivery address.
+- **Direct Engagement**: 1-click WhatsApp and Phone call actions per client.
+- **Repeat Buyer Insights**: Lifetime spending, order count, and VIP repeat client badges.
+- **Export**: One-click CSV export of client history and order records.
+
+#### C. Menu & Stock Management (`/admin/menu` & `/admin/birthday`)
 - Quick toggle for item availability (`In Stock` / `Out of Stock`).
 - Price and discount price editor with instant margin calculation.
 - Direct image upload with automated storage bucketing.
