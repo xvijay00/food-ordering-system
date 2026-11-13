@@ -54,3 +54,4 @@ create index if not exists idx_menu_items_is_birthday
 
 create index if not exists idx_menu_items_category_birthday
   on public.menu_items(category_id, is_available);
+

@@ -96,3 +96,4 @@ test("Pricing Management - computes selling price with discount accurately", () 
   assert.equal(regular.originalPrice, 150);
   assert.equal(regular.hasDiscount, false);
 });
+
