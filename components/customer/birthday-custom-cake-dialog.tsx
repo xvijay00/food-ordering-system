@@ -10,6 +10,7 @@ import {
   Loader2,
   Minus,
   PartyPopper,
+  PhoneCall,
   Plus,
   Sparkles,
   UploadCloud,
@@ -36,6 +37,7 @@ import {
   CAKE_SIZE_PRESETS,
   getEffectiveBasePrice,
   getProductImages,
+  isCustomCakeItem,
 } from "@/lib/bakery-constants";
 import { compressImageToMax800 } from "@/lib/compress-image";
 import { formatPrice } from "@/lib/format";
@@ -53,6 +55,7 @@ export type BirthdayCakeCustomizationResult = {
   specialInstructions?: string | null;
   preorderAt?: string;
   quantity: number;
+  isPricePending?: boolean;
 };
 
 type BirthdayCustomCakeDialogProps = {
@@ -70,6 +73,7 @@ export function BirthdayCustomCakeDialog({
 }: BirthdayCustomCakeDialogProps) {
   const images = React.useMemo(() => (item ? getProductImages(item) : []), [item]);
   const hasVariants = Boolean(item && item.item_variants && item.item_variants.length > 0);
+  const isCustomCake = React.useMemo(() => isCustomCakeItem(item), [item]);
 
   const availableFlavours = React.useMemo(() => {
     if (item && item.flavours && item.flavours.length > 0) {
@@ -124,16 +128,16 @@ export function BirthdayCustomCakeDialog({
   const { sellingPrice } = getEffectiveBasePrice(item);
 
   // Compute calculated unit price based on variant or size preset
-  let calculatedUnitPrice = sellingPrice;
+  let calculatedUnitPrice = isCustomCake ? 0 : sellingPrice;
   let activeSizeLabel = selectedPresetSize;
 
   if (hasVariants && item.item_variants) {
     const matched = item.item_variants.find((v) => v.id === selectedVariantId);
     if (matched) {
-      calculatedUnitPrice = Number(matched.price);
+      calculatedUnitPrice = isCustomCake ? 0 : Number(matched.price);
       activeSizeLabel = matched.label;
     }
-  } else {
+  } else if (!isCustomCake) {
     const preset = CAKE_SIZE_PRESETS.find((p) => p.label === selectedPresetSize);
     const multiplier = preset ? preset.multiplier : 1;
     calculatedUnitPrice = Math.round(sellingPrice * multiplier);
@@ -196,9 +200,14 @@ export function BirthdayCustomCakeDialog({
       specialInstructions: specialInstructions.trim() || undefined,
       preorderAt: preorderAt.trim() || undefined,
       quantity,
+      isPricePending: isCustomCake,
     });
     onOpenChange(false);
-    toast.success(`Added customized "${item.name}" to your Birthday Package!`);
+    toast.success(
+      isCustomCake
+        ? `Added Custom Design Cake to Package! Baker will call to confirm price.`
+        : `Added customized "${item.name}" to your Birthday Package!`
+    );
   };
 
   return (
@@ -237,7 +246,7 @@ export function BirthdayCustomCakeDialog({
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
                 <span className="font-heading text-lg font-black drop-shadow-md">
-                  {formatPrice(calculatedUnitPrice)}
+                  {isCustomCake ? "Price on Call 📞" : formatPrice(calculatedUnitPrice)}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-0.5 text-xs font-bold backdrop-blur-xs">
                   {customImageUrl ? "📸 Custom Photo Attached" : `Size: ${activeSizeLabel}`}
@@ -350,7 +359,7 @@ export function BirthdayCustomCakeDialog({
                     >
                       <span className="text-sm font-bold">{variant.label}</span>
                       <span className="text-xs text-muted-foreground">
-                        {formatPrice(Number(variant.price))}
+                        {isCustomCake ? "Price on Call 📞" : formatPrice(Number(variant.price))}
                       </span>
                     </button>
                   );
@@ -374,7 +383,7 @@ export function BirthdayCustomCakeDialog({
                     >
                       <span className="text-sm font-bold">{preset.label}</span>
                       <span className="text-xs text-muted-foreground">
-                        {formatPrice(priceForSize)}
+                        {isCustomCake ? "Price on Call 📞" : formatPrice(priceForSize)}
                       </span>
                     </button>
                   );
@@ -536,15 +545,31 @@ export function BirthdayCustomCakeDialog({
               </Button>
             </div>
           </div>
+          {/* Custom Cake Price-on-Call Informational Notice */}
+          {isCustomCake && (
+            <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-amber-900 dark:text-amber-200">
+              <PhoneCall className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="space-y-1 text-xs">
+                <p className="font-black text-amber-950 dark:text-amber-100">
+                  Custom Design Price Quoted on Call 📞
+                </p>
+                <p className="leading-relaxed text-amber-800/90 dark:text-amber-200/90">
+                  Order place hone ke baad Baker&apos;s Nation master chef aapko call karenge aur aapki photo &amp; design details ke mutabiq best final price confirm karenge.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="mt-2 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col text-left">
             <span className="text-[11px] font-bold text-muted-foreground">
-              Total Cake Price ({quantity} {quantity === 1 ? "cake" : "cakes"})
+              {isCustomCake
+                ? "Pricing Mode"
+                : `Total Cake Price (${quantity} ${quantity === 1 ? "cake" : "cakes"})`}
             </span>
-            <span className="font-heading text-2xl font-black text-primary">
-              {formatPrice(lineSubtotal)}
+            <span className="font-heading text-xl font-black text-primary sm:text-2xl">
+              {isCustomCake ? "Price on Confirmation 📞" : formatPrice(lineSubtotal)}
             </span>
           </div>
           <Button
@@ -553,7 +578,7 @@ export function BirthdayCustomCakeDialog({
             className="h-11 rounded-xl px-6 font-bold shadow-md"
           >
             <PartyPopper className="mr-2 size-4.5" />
-            Add Cake to Birthday Package
+            {isCustomCake ? "Add Custom Cake (Price on Call)" : "Add Cake to Birthday Package"}
           </Button>
         </DialogFooter>
       </DialogContent>

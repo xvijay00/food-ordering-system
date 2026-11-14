@@ -23,6 +23,10 @@ const statusUpdateSchema = z
       "cancelled",
     ]),
     cancel_reason: z.string().trim().max(300).optional(),
+    customCakePrice: z.coerce
+      .number()
+      .min(1, "Cake price must be at least ₹1")
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -107,6 +111,62 @@ export async function PATCH(
     };
     if (targetStatus === "cancelled") {
       updatePayload.cancel_reason = cancel_reason?.trim() || null;
+    }
+
+    // Handle Custom Design Cake price finalization on confirmation
+    if (targetStatus === "confirmed") {
+      const { data: orderItems } = await admin
+        .from("order_items")
+        .select("id, item_name, unit_price, quantity, custom_image_url")
+        .eq("order_id", existingOrder.id);
+
+      const customCakeItem = orderItems?.find(
+        (it) =>
+          it.custom_image_url ||
+          Number(it.unit_price) === 0 ||
+          it.item_name.toLowerCase().includes("custom")
+      );
+
+      if (customCakeItem && Number(customCakeItem.unit_price) === 0) {
+        if (!parsedBody.data.customCakePrice) {
+          return NextResponse.json(
+            {
+              error:
+                "Please enter the agreed cake price after calling customer before confirming this custom cake order.",
+            },
+            { status: 400 }
+          );
+        }
+      }
+
+      if (customCakeItem && parsedBody.data.customCakePrice) {
+        const price = Number(parsedBody.data.customCakePrice);
+        const lineTotal = Number((price * customCakeItem.quantity).toFixed(2));
+
+        await admin
+          .from("order_items")
+          .update({
+            unit_price: price,
+            line_total: lineTotal,
+          })
+          .eq("id", customCakeItem.id);
+
+        const otherItemsTotal = (orderItems || [])
+          .filter((it) => it.id !== customCakeItem.id)
+          .reduce((sum, it) => sum + Number(it.unit_price) * it.quantity, 0);
+        const newSubtotal = Number((otherItemsTotal + lineTotal).toFixed(2));
+
+        const { data: currentFullOrder } = await admin
+          .from("orders")
+          .select("delivery_fee")
+          .eq("id", existingOrder.id)
+          .single();
+        const deliveryFee = Number(currentFullOrder?.delivery_fee ?? 0);
+        const newTotal = Number((newSubtotal + deliveryFee).toFixed(2));
+
+        updatePayload.subtotal = newSubtotal;
+        updatePayload.total = newTotal;
+      }
     }
 
     const { error: updateError } = await admin

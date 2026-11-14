@@ -565,12 +565,22 @@ export function OrderTracker({ token }: { token: string }) {
                     )}
                   </div>
                   <p className="shrink-0 font-semibold tabular-nums">
-                    {formatPrice(Number(item.line_total))}
+                    {Number(item.line_total) === 0 && order.status === "placed"
+                      ? "Price on Call 📞"
+                      : formatPrice(Number(item.line_total))}
                   </p>
                 </li>
               );
             })}
           </ul>
+
+          {order.order_items?.some(
+            (it) => Number(it.unit_price) === 0 && order.status === "placed"
+          ) && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs font-semibold text-amber-950 dark:text-amber-100">
+              📞 <strong>Chef Call Pending:</strong> Baker&apos;s Nation chef aapke uploaded cake design aur weight details check karke jald call karenge aur final price confirm karenge. Price confirm hone ke baad status &ldquo;Confirmed&rdquo; update ho jayega.
+            </div>
+          )}
 
           {order.notes && (
             <p className="rounded-xl bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
@@ -582,7 +592,9 @@ export function OrderTracker({ token }: { token: string }) {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Subtotal</span>
               <span className="tabular-nums">
-                {formatPrice(Number(order.subtotal))}
+                {Number(order.subtotal) === 0 && order.status === "placed"
+                  ? "Pending Quote 📞"
+                  : formatPrice(Number(order.subtotal))}
               </span>
             </div>
             {Number(order.delivery_fee) > 0 && (
@@ -596,7 +608,9 @@ export function OrderTracker({ token }: { token: string }) {
             <div className="flex items-center justify-between border-t border-border/60 pt-2 text-base font-bold">
               <span>Total</span>
               <span className="tabular-nums">
-                {formatPrice(Number(order.total))}
+                {Number(order.total) === 0 && order.status === "placed"
+                  ? "Price on Call 📞"
+                  : formatPrice(Number(order.total))}
               </span>
             </div>
           </div>

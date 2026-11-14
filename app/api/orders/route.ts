@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getEffectiveBasePrice } from "@/lib/bakery-constants";
+import {
+  getEffectiveBasePrice,
+  isCustomCakeItem,
+} from "@/lib/bakery-constants";
 import { isMissingColumnError } from "@/lib/bakery-queries";
 import { logger } from "@/lib/logger";
 import { sendStaffOrderPush } from "@/lib/push";
@@ -310,6 +313,7 @@ export async function POST(request: Request) {
 
     // 6. Recalculate all prices strictly on server
     let subtotal = 0;
+    let hasCustomCakeOrder = false;
     const orderItemSnapshots: Omit<TablesInsert<"order_items">, "order_id">[] =
       [];
 
@@ -331,14 +335,20 @@ export async function POST(request: Request) {
         );
       }
 
-      let basePrice = getEffectiveBasePrice(menuItem).sellingPrice;
+      const isCustomCake =
+        isCustomCakeItem(menuItem) || Boolean(reqItem.customImageUrl);
+      if (isCustomCake) {
+        hasCustomCakeOrder = true;
+      }
+
+      let basePrice = isCustomCake ? 0 : getEffectiveBasePrice(menuItem).sellingPrice;
       let resolvedVariantLabel: string | null = null;
 
       if (reqItem.variantId) {
         const matchedVariant = menuItem.item_variants.find(
           (variant) => variant.id === reqItem.variantId
         );
-        if (!matchedVariant) {
+        if (!matchedVariant && !isCustomCake) {
           return NextResponse.json(
             {
               error: `The selected option for "${menuItem.name}" is no longer available.`,
@@ -346,9 +356,11 @@ export async function POST(request: Request) {
             { status: 400 }
           );
         }
-        basePrice = Number(matchedVariant.price);
-        resolvedVariantLabel = matchedVariant.label;
-      } else if (menuItem.item_variants.length > 0) {
+        if (matchedVariant) {
+          basePrice = isCustomCake ? 0 : Number(matchedVariant.price);
+          resolvedVariantLabel = matchedVariant.label;
+        }
+      } else if (menuItem.item_variants.length > 0 && !isCustomCake) {
         return NextResponse.json(
           { error: `Please choose a portion option for "${menuItem.name}".` },
           { status: 400 }
@@ -383,7 +395,7 @@ export async function POST(request: Request) {
         });
       }
 
-      const unitPrice = Number((basePrice + addonsTotal).toFixed(2));
+      const unitPrice = isCustomCake ? 0 : Number((basePrice + addonsTotal).toFixed(2));
       const lineTotal = Number((unitPrice * reqItem.quantity).toFixed(2));
       subtotal = Number((subtotal + lineTotal).toFixed(2));
 
@@ -402,7 +414,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (input.orderType === "delivery" && subtotal < minOrder) {
+    if (input.orderType === "delivery" && !hasCustomCakeOrder && subtotal < minOrder) {
       return NextResponse.json(
         {
           error: `Delivery orders require a minimum subtotal of ₹${minOrder}.`,

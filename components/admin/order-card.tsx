@@ -12,9 +12,11 @@ import {
   MapPin,
   Phone,
   ReceiptText,
+  Sparkles,
   UtensilsCrossed,
   XCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +31,11 @@ type OrderCardProps = {
   nowMs: number;
   highlighted?: boolean;
   updating?: boolean;
-  onStatusAction: (order: OrderWithItems, targetStatus: string) => void;
+  onStatusAction: (
+    order: OrderWithItems,
+    targetStatus: string,
+    customCakePrice?: number
+  ) => void;
   onRequestReject: (order: OrderWithItems) => void;
 };
 
@@ -62,6 +68,19 @@ export function OrderCard({
     order.order_type,
     order.status
   );
+
+  const hasCustomCake = orderItems.some(
+    (item) =>
+      item.custom_image_url ||
+      Number(item.unit_price) === 0 ||
+      item.item_name.toLowerCase().includes("custom")
+  );
+  const isCustomCakePendingPrice =
+    hasCustomCake &&
+    order.status === "placed" &&
+    orderItems.some((item) => Number(item.unit_price) === 0);
+
+  const [enteredCakePrice, setEnteredCakePrice] = React.useState<string>("");
 
   return (
     <Card
@@ -219,11 +238,96 @@ export function OrderCard({
           </p>
         )}
 
+        {/* Custom Design Cake Price Setting Box */}
+        {isCustomCakePendingPrice && (
+          <div className="space-y-2 rounded-xl border-2 border-amber-500/50 bg-amber-500/10 p-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-xs font-black text-amber-900 dark:text-amber-200">
+                <Sparkles className="size-3.5 text-amber-600" />
+                Custom Cake Price Not Set
+              </span>
+              <Badge className="bg-amber-600 text-[10px] font-black text-white">
+                Call &amp; Set Price
+              </Badge>
+            </div>
+
+            <p className="text-[11px] leading-relaxed text-amber-950/80 dark:text-amber-200/80">
+              Customer ko phone karke design confirm karein aur price enter karke &ldquo;Confirm &amp; Set Price&rdquo; dabayein:
+            </p>
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Enter Agreed Price (₹)"
+                  value={enteredCakePrice}
+                  onChange={(e) => setEnteredCakePrice(e.target.value)}
+                  className="h-9 w-full rounded-lg border border-amber-500/40 bg-background pl-6 pr-2 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                disabled={updating || !enteredCakePrice}
+                onClick={() => {
+                  const price = parseFloat(enteredCakePrice);
+                  if (!price || price <= 0) {
+                    toast.error("Please enter a valid price for the custom cake.");
+                    return;
+                  }
+                  onStatusAction(order, "confirmed", price);
+                }}
+                className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700"
+              >
+                {updating ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <Check className="size-3" />
+                )}
+                <span>Confirm &amp; Set Price</span>
+              </Button>
+            </div>
+
+            {order.customer_phone && order.customer_phone !== "N/A" && (
+              <div className="flex items-center gap-2 pt-0.5">
+                <a
+                  href={`tel:${order.customer_phone}`}
+                  className="inline-flex min-h-7 flex-1 items-center justify-center gap-1 rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-primary hover:bg-muted"
+                >
+                  <Phone className="size-3" />
+                  <span>Call {order.customer_phone}</span>
+                </a>
+                <a
+                  href={`https://wa.me/91${order.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                    `Hello ${order.customer_name}, Bakers Nation Nahan se aapke Custom Cake order #${order.order_no} ke regarding call kar rahe hain.`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-7 flex-1 items-center justify-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                >
+                  <span>💬 WhatsApp</span>
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Role-Filtered Actions */}
         {actions.length > 0 && (
           <div className="flex flex-wrap gap-2 border-t border-border/60 pt-2.5">
             {actions.map((action) => {
               const isReject = action.targetStatus === "cancelled";
+              const isConfirm = action.targetStatus === "confirmed";
+
+              // If custom cake price is pending, staff must use the dedicated price box above to confirm
+              if (isConfirm && isCustomCakePendingPrice) {
+                return null;
+              }
 
               return (
                 <Button

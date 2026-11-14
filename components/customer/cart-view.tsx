@@ -60,6 +60,9 @@ export function CartView() {
 
   const itemCount = calculateCartItemCount(items);
   const subtotal = calculateCartSubtotal(items);
+  const hasPricePending = items.some(
+    (i) => i.isPricePending || i.unitPrice === 0
+  );
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:px-6">
@@ -153,13 +156,17 @@ export function CartView() {
                 )}
 
                 <p className="text-sm font-bold text-foreground/70">
-                  {formatPrice(item.unitPrice)} each
+                  {item.isPricePending || item.unitPrice === 0
+                    ? "Price on Call 📞"
+                    : `${formatPrice(item.unitPrice)} each`}
                 </p>
               </div>
 
               <div className="flex flex-col items-end gap-2.5">
                 <p className="text-lg font-black tabular-nums text-foreground">
-                  {formatPrice(item.unitPrice * item.quantity)}
+                  {item.isPricePending || item.unitPrice === 0
+                    ? "Price on Call 📞"
+                    : formatPrice(item.unitPrice * item.quantity)}
                 </p>
 
                 <div className="flex items-center gap-2">
@@ -230,9 +237,18 @@ export function CartView() {
             <p className="text-xs font-bold tracking-wider text-foreground/75 uppercase">
               Subtotal
             </p>
-            <p className="text-3xl font-black tabular-nums text-foreground">
-              {formatPrice(subtotal)}
+            <p className="text-2xl font-black tabular-nums text-foreground sm:text-3xl">
+              {hasPricePending
+                ? subtotal > 0
+                  ? `${formatPrice(subtotal)} + Cake (Price on Call 📞)`
+                  : "Price on Call 📞"
+                : formatPrice(subtotal)}
             </p>
+            {hasPricePending && (
+              <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                📞 Baker&apos;s Nation will call to finalize custom cake price.
+              </p>
+            )}
           </div>
 
           <Button

@@ -3,18 +3,23 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Bike,
   CalendarClock,
+  Check,
   Clock,
   ExternalLink,
+  Loader2,
   MapPin,
   Phone,
   Printer,
+  Sparkles,
   UtensilsCrossed,
   XCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,6 +63,7 @@ export function OrderDetailBill({
       tone: "bg-muted text-foreground border-border",
     };
 
+  const router = useRouter();
   const tableNumber = order.restaurant_tables?.table_number;
   const items = order.order_items ?? [];
   const history = React.useMemo(() => {
@@ -68,6 +74,54 @@ export function OrderDetailBill({
     );
     return entries;
   }, [order.order_status_history]);
+
+  const hasCustomCake = items.some(
+    (item) =>
+      item.custom_image_url ||
+      Number(item.unit_price) === 0 ||
+      item.item_name.toLowerCase().includes("custom")
+  );
+  const isCustomCakePendingPrice =
+    hasCustomCake &&
+    order.status === "placed" &&
+    items.some((item) => Number(item.unit_price) === 0);
+
+  const [cakePriceInput, setCakePriceInput] = React.useState<string>("");
+  const [submittingPrice, setSubmittingPrice] = React.useState(false);
+
+  const handleConfirmWithPrice = async () => {
+    const price = parseFloat(cakePriceInput);
+    if (!price || price <= 0) {
+      toast.error("Please enter a valid cake price.");
+      return;
+    }
+
+    setSubmittingPrice(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "confirmed",
+          customCakePrice: price,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to confirm custom cake order.");
+      }
+      toast.success(
+        "Cake price confirmed & order accepted! Recorded in sales reports."
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Error confirming order."
+      );
+    } finally {
+      setSubmittingPrice(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -113,6 +167,80 @@ export function OrderDetailBill({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Left: Full Order Details & Status Timeline (hidden when printing thermal receipt) */}
         <div className="space-y-6 lg:col-span-3 print:hidden">
+          {/* Custom Cake Pricing Action Banner */}
+          {isCustomCakePendingPrice && (
+            <Card className="rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 shadow-md">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base font-black text-amber-950 dark:text-amber-100">
+                    <Sparkles className="size-5 text-amber-600" />
+                    <span>Action Required: Set Custom Cake Price</span>
+                  </CardTitle>
+                  <Badge className="bg-amber-600 text-xs font-black text-white">
+                    Price on Call 📞
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-0">
+                <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+                  Customer ko phone karke cake photo &amp; details confirm karein. Yahan agreed price enter karein aur &ldquo;Confirm &amp; Set Price&rdquo; click karein taaki order confirm hokar sales reports me jud sake:
+                </p>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative min-w-[180px] flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="Enter Agreed Price (₹)"
+                      value={cakePriceInput}
+                      onChange={(e) => setCakePriceInput(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-amber-500/40 bg-background pl-7 pr-3 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    disabled={submittingPrice || !cakePriceInput}
+                    onClick={handleConfirmWithPrice}
+                    className="h-10 rounded-xl bg-emerald-600 px-5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
+                  >
+                    {submittingPrice ? (
+                      <Loader2 className="mr-1.5 size-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-1.5 size-4" />
+                    )}
+                    <span>Confirm &amp; Set Price</span>
+                  </Button>
+                </div>
+
+                {order.customer_phone && order.customer_phone !== "N/A" && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <a
+                      href={`tel:${order.customer_phone}`}
+                      className="inline-flex min-h-8 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-primary hover:bg-muted"
+                    >
+                      <Phone className="size-3.5" />
+                      <span>Call Customer ({order.customer_phone})</span>
+                    </a>
+                    <a
+                      href={`https://wa.me/91${order.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                        `Hello ${order.customer_name}, Bakers Nation Nahan se aapke Custom Cake order #${order.order_no} ke regarding call kar rahe hain.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-8 flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                    >
+                      <span>💬 WhatsApp Customer</span>
+                    </a>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="rounded-2xl">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base font-bold">
@@ -480,7 +608,9 @@ export function OrderDetailBill({
                         {item.quantity}
                       </td>
                       <td className="py-1.5 text-right tabular-nums">
-                        {formatPrice(Number(item.line_total))}
+                        {Number(item.line_total) === 0 && order.status === "placed"
+                          ? "Price on Call"
+                          : formatPrice(Number(item.line_total))}
                       </td>
                     </tr>
                   );
@@ -493,7 +623,9 @@ export function OrderDetailBill({
               <div className="flex justify-between gap-2">
                 <span>Subtotal</span>
                 <span className="tabular-nums">
-                  {formatPrice(Number(order.subtotal))}
+                  {Number(order.subtotal) === 0 && order.status === "placed"
+                    ? "Pending Quote"
+                    : formatPrice(Number(order.subtotal))}
                 </span>
               </div>
               {order.order_type === "delivery" && (
@@ -507,7 +639,9 @@ export function OrderDetailBill({
               <div className="flex justify-between gap-2 border-t border-dashed border-zinc-400 pt-1.5 text-sm font-bold">
                 <span>TOTAL</span>
                 <span className="tabular-nums">
-                  {formatPrice(Number(order.total))}
+                  {Number(order.total) === 0 && order.status === "placed"
+                    ? "Price on Call 📞"
+                    : formatPrice(Number(order.total))}
                 </span>
               </div>
             </div>

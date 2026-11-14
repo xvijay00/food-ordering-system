@@ -418,6 +418,15 @@ export async function fetchSalesReport(
         continue;
       }
 
+      if (order.status === "placed") {
+        // Unconfirmed order with price pending confirmation; does not count in sales revenue yet
+        summary.pending_count += 1;
+        summary.pending_sales = Number(
+          (summary.pending_sales + amount).toFixed(2)
+        );
+        continue;
+      }
+
       activePeriodOrderIds.push(order.id);
       summary.order_count += 1;
       summary.total_sales = Number((summary.total_sales + amount).toFixed(2));
@@ -578,7 +587,7 @@ export async function fetchSalesReport(
     }
 
     for (const order of orders) {
-      if (order.status === "cancelled") continue;
+      if (order.status === "cancelled" || order.status === "placed") continue;
       const createdDate = new Date(order.created_at);
       const amount = Number(order.total ?? 0);
 
@@ -617,7 +626,7 @@ export async function fetchSalesReport(
       let revenue = 0;
       let count = 0;
       for (const order of orders) {
-        if (order.status === "cancelled") continue;
+        if (order.status === "cancelled" || order.status === "placed") continue;
         const t = new Date(order.created_at).getTime();
         if (t >= wStartMs && t < wEndMs) {
           revenue += Number(order.total ?? 0);

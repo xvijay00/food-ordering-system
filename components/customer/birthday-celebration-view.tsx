@@ -41,6 +41,7 @@ import {
   getEffectiveBasePrice,
   getProductImages,
   isBirthdayCategory,
+  isCustomCakeItem,
 } from "@/lib/bakery-constants";
 import { formatPrice } from "@/lib/format";
 import {
@@ -69,6 +70,7 @@ export type PackageBuilderItem = {
   specialInstructions?: string | null;
   preorderAt?: string | null;
   isCustomCake: boolean;
+  isPricePending?: boolean;
 };
 
 type BirthdayCelebrationViewProps = {
@@ -150,6 +152,22 @@ export function BirthdayCelebrationView({
   const packageSubtotal = React.useMemo(() => {
     return calculateBirthdayPackageSubtotal(packageItems);
   }, [packageItems]);
+
+  const hasPricePendingItem = React.useMemo(() => {
+    return packageItems.some(
+      (p) => p.isPricePending || (p.isCustomCake && p.unitPrice === 0)
+    );
+  }, [packageItems]);
+
+  const packageTotalDisplay = React.useMemo(() => {
+    if (hasPricePendingItem) {
+      if (packageSubtotal > 0) {
+        return `${formatPrice(packageSubtotal)} + Cake (Price on Call 📞)`;
+      }
+      return "Price on Call 📞";
+    }
+    return formatPrice(packageSubtotal);
+  }, [hasPricePendingItem, packageSubtotal]);
 
   const originalPackageTotal = React.useMemo(() => {
     return packageItems.reduce(
@@ -237,6 +255,11 @@ export function BirthdayCelebrationView({
     const images = getProductImages(item);
     const { originalPrice } = getEffectiveBasePrice(item);
 
+    const isCustomCake = isCustomCakeItem(item);
+    const isPricePending =
+      isCustomCake || Boolean(customization.isPricePending) || customization.unitPrice === 0;
+    const finalUnitPrice = isCustomCake ? 0 : customization.unitPrice;
+
     const packageItemId = `cake-${item.id}-${Date.now()}`;
 
     const newPackageCake: PackageBuilderItem = {
@@ -245,8 +268,8 @@ export function BirthdayCelebrationView({
       name: item.name,
       imageUrl: customization.customImageUrl || images[0] || null,
       categoryName: catName,
-      unitPrice: customization.unitPrice,
-      originalPrice: Math.max(customization.unitPrice, originalPrice),
+      unitPrice: finalUnitPrice,
+      originalPrice: Math.max(finalUnitPrice, originalPrice),
       quantity: customization.quantity,
       isVeg: item.is_veg,
       variantId: customization.variantId ?? null,
@@ -258,10 +281,15 @@ export function BirthdayCelebrationView({
       specialInstructions: customization.specialInstructions || null,
       preorderAt: customization.preorderAt || null,
       isCustomCake: true,
+      isPricePending,
     };
 
     setPackageItems((prev) => [...prev, newPackageCake]);
-    toast.success(`Custom cake added to your Birthday Package!`);
+    toast.success(
+      isCustomCake
+        ? `Custom Design Cake added! Chef will call to confirm price.`
+        : `Custom cake added to your Birthday Package!`
+    );
   };
 
   // Add Entire Birthday Package to Cart
@@ -281,6 +309,8 @@ export function BirthdayCelebrationView({
       const combinedMessage =
         messageParts.length > 0 ? messageParts.join(" | ") : null;
 
+      const isPending = Boolean(p.isPricePending || (p.isCustomCake && p.unitPrice === 0));
+
       addToCart({
         menuItemId: p.menuItemId,
         name: p.name,
@@ -292,10 +322,11 @@ export function BirthdayCelebrationView({
         eggPreference: p.eggPreference ?? null,
         cakeMessage: combinedMessage,
         customImageUrl: p.customImageUrl ?? null,
-        unitPrice: p.unitPrice,
+        unitPrice: isPending ? 0 : p.unitPrice,
         quantity: p.quantity,
         isBirthdayPackage: true,
         birthdayCategory: p.categoryName,
+        isPricePending: isPending,
       });
     }
 
@@ -716,16 +747,27 @@ export function BirthdayCelebrationView({
                         {/* Pricing and Actions */}
                         <div className="mt-4 border-t border-border/60 pt-3">
                           <div className="flex items-baseline justify-between gap-2">
-                            <div className="flex items-baseline gap-2">
-                              <span className="font-heading text-xl font-black text-foreground">
-                                {formatPrice(sellingPrice)}
-                              </span>
-                              {hasDiscount && (
-                                <span className="text-xs font-bold text-muted-foreground line-through">
-                                  {formatPrice(originalPrice)}
+                            {isCustomCakeItem(product) ? (
+                              <div className="flex flex-col">
+                                <span className="font-heading text-sm font-black text-primary">
+                                  Price on Call 📞
                                 </span>
-                              )}
-                            </div>
+                                <span className="text-[10px] font-semibold text-muted-foreground">
+                                  Baker confirms on phone
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-baseline gap-2">
+                                <span className="font-heading text-xl font-black text-foreground">
+                                  {formatPrice(sellingPrice)}
+                                </span>
+                                {hasDiscount && (
+                                  <span className="text-xs font-bold text-muted-foreground line-through">
+                                    {formatPrice(originalPrice)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
                             {/* Action Button */}
                             {isOutOfStock ? (
@@ -743,15 +785,15 @@ export function BirthdayCelebrationView({
                                 size="sm"
                                 onClick={() => setCustomizingCake(product)}
                                 className={
-                                  product.name.toLowerCase().includes("custom")
+                                  isCustomCakeItem(product)
                                     ? "h-9 rounded-xl bg-gradient-to-r from-amber-600 to-primary px-3 text-xs font-bold text-white shadow-xs"
                                     : "h-9 rounded-xl px-3 text-xs font-bold shadow-xs"
                                 }
                               >
-                                {product.name.toLowerCase().includes("custom") ? (
+                                {isCustomCakeItem(product) ? (
                                   <>
                                     <Camera className="mr-1 size-3.5" />
-                                    Upload & Customize
+                                    Design &amp; Quote 📞
                                   </>
                                 ) : (
                                   <>
@@ -949,14 +991,18 @@ export function BirthdayCelebrationView({
                               )}
 
                               <p className="mt-1 text-xs font-bold text-foreground/80">
-                                {formatPrice(item.unitPrice)} each
+                                {item.isPricePending || (item.isCustomCake && item.unitPrice === 0)
+                                  ? "Price on Call 📞"
+                                  : `${formatPrice(item.unitPrice)} each`}
                               </p>
                             </div>
 
                             {/* Stepper & Line Total */}
                             <div className="flex flex-col items-end gap-1.5">
                               <span className="font-heading text-xs font-black text-foreground">
-                                {formatPrice(item.unitPrice * item.quantity)}
+                                {item.isPricePending || (item.isCustomCake && item.unitPrice === 0)
+                                  ? "Price on Call 📞"
+                                  : formatPrice(item.unitPrice * item.quantity)}
                               </span>
 
                               <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-0.5">
@@ -1022,10 +1068,15 @@ export function BirthdayCelebrationView({
 
                           <div className="flex justify-between pt-1 text-base font-black text-foreground">
                             <span>Package Total:</span>
-                            <span className="font-heading text-xl text-primary">
-                              {formatPrice(packageSubtotal)}
+                            <span className="font-heading text-lg font-black text-primary">
+                              {packageTotalDisplay}
                             </span>
                           </div>
+                          {hasPricePendingItem && (
+                            <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-[11px] font-semibold text-amber-900 dark:text-amber-200">
+                              📞 Custom cake price will be finalized on call by our master chef.
+                            </div>
+                          )}
                         </div>
 
                         {/* Action Buttons */}
@@ -1077,8 +1128,8 @@ export function BirthdayCelebrationView({
                 <p className="text-[11px] font-bold text-muted-foreground">
                   Birthday Package ({totalPackageItemsCount} items)
                 </p>
-                <p className="font-heading text-lg font-black text-primary">
-                  {formatPrice(packageSubtotal)}
+                <p className="font-heading text-sm font-black text-primary sm:text-base">
+                  {packageTotalDisplay}
                 </p>
               </div>
             </button>
@@ -1134,7 +1185,9 @@ export function BirthdayCelebrationView({
                     {item.name}
                   </h5>
                   <p className="text-[11px] font-semibold text-muted-foreground">
-                    {formatPrice(item.unitPrice)} each
+                    {item.isPricePending || (item.isCustomCake && item.unitPrice === 0)
+                      ? "Price on Call 📞"
+                      : `${formatPrice(item.unitPrice)} each`}
                   </p>
                   {item.isCustomCake && (
                     <div className="mt-0.5 space-y-0.5 text-[10px] text-primary">
@@ -1181,8 +1234,10 @@ export function BirthdayCelebrationView({
                     </Button>
                   </div>
 
-                  <span className="w-16 text-right font-heading text-xs font-black">
-                    {formatPrice(item.unitPrice * item.quantity)}
+                  <span className="w-20 text-right font-heading text-xs font-black">
+                    {item.isPricePending || (item.isCustomCake && item.unitPrice === 0)
+                      ? "Price on Call"
+                      : formatPrice(item.unitPrice * item.quantity)}
                   </span>
                 </div>
               </div>
@@ -1192,10 +1247,15 @@ export function BirthdayCelebrationView({
           <div className="mt-4 border-t border-border/80 pt-3">
             <div className="flex justify-between text-base font-black">
               <span>Total:</span>
-              <span className="font-heading text-xl text-primary">
-                {formatPrice(packageSubtotal)}
+              <span className="font-heading text-lg font-black text-primary">
+                {packageTotalDisplay}
               </span>
             </div>
+            {hasPricePendingItem && (
+              <p className="mt-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                📞 Custom cake price will be confirmed on call by chef.
+              </p>
+            )}
 
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Button

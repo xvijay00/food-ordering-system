@@ -170,13 +170,16 @@ export function CheckoutForm() {
   }
 
   const subtotal = calculateCartSubtotal(items);
+  const hasPricePending = items.some(
+    (i) => i.isPricePending || i.unitPrice === 0
+  );
   const appliedDeliveryFee = settings.delivery_fee;
   const total = calculateCartTotal(
     items,
     "delivery",
     settings.delivery_fee
   );
-  const minOrderNotMet = subtotal < settings.min_order;
+  const minOrderNotMet = !hasPricePending && subtotal < settings.min_order;
   const orderingDisabled =
     isSubmitting || !settings.shop_open || minOrderNotMet;
 
@@ -188,7 +191,7 @@ export function CheckoutForm() {
       return;
     }
 
-    if (subtotal < settings.min_order) {
+    if (!hasPricePending && subtotal < settings.min_order) {
       setSubmitError(
         `Minimum order amount for delivery is ${formatPrice(settings.min_order)}.`
       );
@@ -577,6 +580,8 @@ export function CheckoutForm() {
                     </>
                   ) : !settings.shop_open ? (
                     <span>Restaurant is closed</span>
+                  ) : hasPricePending ? (
+                    <span>Place Order &amp; Confirm Price on Call 📞</span>
                   ) : (
                     <span>Place Order · {formatPrice(total)}</span>
                   )}
@@ -623,7 +628,9 @@ export function CheckoutForm() {
                       )}
                     </div>
                     <span className="shrink-0 font-extrabold tabular-nums text-foreground">
-                      {formatPrice(item.unitPrice * item.quantity)}
+                      {item.isPricePending || item.unitPrice === 0
+                        ? "Price on Call 📞"
+                        : formatPrice(item.unitPrice * item.quantity)}
                     </span>
                   </li>
                 ))}
@@ -633,7 +640,11 @@ export function CheckoutForm() {
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-foreground/80">Subtotal</span>
                   <span className="font-bold tabular-nums text-foreground">
-                    {formatPrice(subtotal)}
+                    {hasPricePending
+                      ? subtotal > 0
+                        ? `${formatPrice(subtotal)} + Cake (Price on Call)`
+                        : "Price on Call 📞"
+                      : formatPrice(subtotal)}
                   </span>
                 </div>
 
@@ -648,8 +659,20 @@ export function CheckoutForm() {
 
                 <div className="flex items-center justify-between border-t border-border/60 pt-3 text-xl font-black text-foreground">
                   <span>Total</span>
-                  <span className="tabular-nums">{formatPrice(total)}</span>
+                  <span className="tabular-nums">
+                    {hasPricePending
+                      ? total > 0
+                        ? `${formatPrice(total)} + Cake Price on Call`
+                        : "Price on Call 📞"
+                      : formatPrice(total)}
+                  </span>
                 </div>
+
+                {hasPricePending && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs font-semibold text-amber-950 dark:text-amber-100">
+                    📞 <strong>Custom Cake Note:</strong> Baker&apos;s Nation master chef will call you shortly to discuss cake decoration and finalize the price before baking.
+                  </div>
+                )}
               </div>
 
               {minOrderNotMet && (

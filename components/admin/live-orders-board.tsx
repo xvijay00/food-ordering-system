@@ -467,7 +467,8 @@ export function LiveOrdersBoard({
   const handleStatusUpdate = async (
     order: OrderWithItems,
     targetStatus: string,
-    cancelReason?: string
+    cancelReason?: string,
+    customCakePrice?: number
   ) => {
     setUpdatingOrderId(order.id);
     try {
@@ -479,6 +480,7 @@ export function LiveOrdersBoard({
           body: JSON.stringify({
             status: targetStatus,
             ...(cancelReason ? { cancel_reason: cancelReason } : {}),
+            ...(customCakePrice !== undefined ? { customCakePrice } : {}),
           }),
         }
       );
@@ -728,8 +730,8 @@ export function LiveOrdersBoard({
                     nowMs={nowMs}
                     highlighted={highlightedIds.has(order.id)}
                     updating={updatingOrderId === order.id}
-                    onStatusAction={(target, status) =>
-                      void handleStatusUpdate(target, status)
+                    onStatusAction={(target, status, price) =>
+                      void handleStatusUpdate(target, status, undefined, price)
                     }
                     onRequestReject={(target) => {
                       setRejectTarget(target);
@@ -776,8 +778,8 @@ export function LiveOrdersBoard({
                     nowMs={nowMs}
                     highlighted={highlightedIds.has(order.id)}
                     updating={updatingOrderId === order.id}
-                    onStatusAction={(target, status) =>
-                      void handleStatusUpdate(target, status)
+                    onStatusAction={(target, status, price) =>
+                      void handleStatusUpdate(target, status, undefined, price)
                     }
                     onRequestReject={(target) => {
                       setRejectTarget(target);

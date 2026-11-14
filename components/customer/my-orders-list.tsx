@@ -232,8 +232,10 @@ export function MyOrdersList() {
 
                     <div className="flex items-center gap-3">
                       {typeof total === "number" && (
-                        <span className="text-base font-bold tabular-nums">
-                          {formatPrice(total)}
+                        <span className="text-sm sm:text-base font-bold tabular-nums text-foreground">
+                          {total === 0 && order?.status === "placed"
+                            ? "Price on Call 📞"
+                            : formatPrice(total)}
                         </span>
                       )}
                       <ArrowRight

@@ -20,6 +20,7 @@ export type CartItem = {
   quantity: number;
   isBirthdayPackage?: boolean;
   birthdayCategory?: string | null;
+  isPricePending?: boolean;
 };
 
 export type AddCartItemInput = {
@@ -39,6 +40,7 @@ export type AddCartItemInput = {
   quantity?: number;
   isBirthdayPackage?: boolean;
   birthdayCategory?: string | null;
+  isPricePending?: boolean;
 };
 
 export type CartState = {
@@ -190,6 +192,7 @@ export const useCartStore = create<CartState>()(
             quantity: quantityToAdd,
             isBirthdayPackage: Boolean(input.isBirthdayPackage),
             birthdayCategory: input.birthdayCategory ?? null,
+            isPricePending: Boolean(input.isPricePending),
           };
 
           return { items: [...state.items, newItem] };

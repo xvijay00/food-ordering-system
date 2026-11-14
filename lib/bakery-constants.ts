@@ -99,3 +99,33 @@ export function getProductImages(item: {
   return [];
 }
 
+export function isCustomCakeItem(
+  itemOrName?:
+    | {
+        id?: string | null;
+        name?: string | null;
+        custom_image_url?: string | null;
+        customImageUrl?: string | null;
+      }
+    | string
+    | null
+): boolean {
+  if (!itemOrName) return false;
+  if (typeof itemOrName === "string") {
+    const l = itemOrName.toLowerCase();
+    return (
+      l.includes("custom") ||
+      l.includes("photo birthday cake") ||
+      l.includes("photo cake")
+    );
+  }
+  if (itemOrName.custom_image_url || itemOrName.customImageUrl) return true;
+  if (itemOrName.id === "7637c7c8-07e8-4955-9b0a-8fe1a074a750") return true;
+  const l = (itemOrName.name || "").toLowerCase();
+  return (
+    l.includes("custom") ||
+    l.includes("photo birthday cake") ||
+    l.includes("photo cake")
+  );
+}
+
