@@ -72,6 +72,12 @@ export type ClientProfile = {
   orders: ClientOrderRecord[];
 };
 
+function escapeCsvCell(value: unknown): string {
+  if (value === null || value === undefined) return '""';
+  const str = String(value).replace(/"/g, '""');
+  return `"${str}"`;
+}
+
 function formatISTDate(isoString: string): string {
   try {
     return new Date(isoString).toLocaleString("en-IN", {
@@ -254,31 +260,33 @@ export function ClientRecordsView({
         .join("; ");
 
       return [
-        o.order_no,
-        formatISTDate(o.created_at),
-        `"${(o.customer_name || "").replace(/"/g, '""')}"`,
-        `"${o.customer_phone}"`,
-        `"${(o.delivery_address || "").replace(/"/g, '""')}"`,
-        o.status,
-        o.payment_method,
-        o.subtotal,
-        o.delivery_fee,
-        o.total,
-        `"${itemsSummary.replace(/"/g, '""')}"`,
-      ];
+        escapeCsvCell(o.order_no),
+        escapeCsvCell(formatISTDate(o.created_at)),
+        escapeCsvCell(o.customer_name || ""),
+        escapeCsvCell(o.customer_phone || ""),
+        escapeCsvCell(o.delivery_address || ""),
+        escapeCsvCell(o.status || ""),
+        escapeCsvCell(o.payment_method || ""),
+        escapeCsvCell(Number(o.subtotal || 0).toFixed(2)),
+        escapeCsvCell(Number(o.delivery_fee || 0).toFixed(2)),
+        escapeCsvCell(Number(o.total || 0).toFixed(2)),
+        escapeCsvCell(itemsSummary),
+      ].join(",");
     });
 
+    // \uFEFF (UTF-8 BOM) ensures Microsoft Excel & Google Sheets parse columns and characters accurately
     const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+      "\uFEFF" + [headers.map(escapeCsvCell).join(","), ...rows].join("\r\n");
 
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `bakers_nation_client_records_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
