@@ -156,6 +156,39 @@ export function MenuBrowser({
         </div>
       )}
 
+      {/* Birthday & Custom Cake Spotlight Banner */}
+      <div className="overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-amber-500/15 via-primary/10 to-rose-500/10 p-4 shadow-xs sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-2xl shadow-2xs">
+              🎂
+            </span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-heading text-base font-black text-foreground sm:text-lg">
+                  Custom Design & Photo Cake
+                </span>
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-black uppercase text-primary">
+                  Photo Upload 📸
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-foreground/75 sm:text-sm">
+                Apna custom cake design ya photo upload karein — Price on call 📞
+              </p>
+            </div>
+          </div>
+          <Button
+            asChild
+            className="h-10 shrink-0 rounded-xl bg-gradient-to-r from-amber-600 to-primary px-4 text-sm font-black text-white shadow-sm transition-transform hover:scale-[1.02]"
+          >
+            <Link href="/birthday">
+              <span>Send Photo & Order</span>
+              <ArrowRight className="ml-1.5 size-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+
       {/* Search + Veg / Non-Veg Toggle */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 sm:max-w-md">

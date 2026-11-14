@@ -38,6 +38,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
+  BAKERY_EGG_OPTIONS,
+  BAKERY_FLAVOUR_PRESETS,
   getEffectiveBasePrice,
   getProductImages,
   isBirthdayCategory,
@@ -116,17 +118,62 @@ export function BirthdayCelebrationView({
     if (dedicated) return dedicated;
 
     // 2. Any item in Birthday Cakes category or named cake
-    return (
-      menuItems.find((i) => {
-        const cat = categoryMap.get(i.category_id)?.toLowerCase() ?? "";
-        return (
-          cat.includes("cake") ||
-          i.name.toLowerCase().includes("cake") ||
-          (i.flavours && i.flavours.length > 0)
-        );
-      }) ?? null
+    const fromCategory = menuItems.find((i) => {
+      const cat = categoryMap.get(i.category_id)?.toLowerCase() ?? "";
+      return (
+        cat.includes("cake") ||
+        i.name.toLowerCase().includes("cake") ||
+        (i.flavours && i.flavours.length > 0)
+      );
+    });
+    if (fromCategory) return fromCategory;
+
+    // 3. Fallback item so Custom Cake Studio is ALWAYS available
+    const cakeCategory = categories.find((c) =>
+      c.name.toLowerCase().includes("cake")
     );
-  }, [menuItems, categoryMap]);
+    const catId =
+      cakeCategory?.id ??
+      categories[0]?.id ??
+      "dfa84651-7ef3-4917-bcfc-765237e6682d";
+
+    return {
+      id: "7637c7c8-07e8-4955-9b0a-8fe1a074a750",
+      category_id: catId,
+      name: "Custom Design & Photo Birthday Cake",
+      description:
+        "Send any custom design or photo reference for your celebration. Freshly handcrafted with your chosen flavour, weight & egg preference. Price quoted on call.",
+      base_price: 0,
+      price: 0,
+      discount_percentage: 0,
+      discount_price: null,
+      sort_order: 1,
+      stock_quantity: 999,
+      image_url: "/logo.png",
+      image_urls: ["/logo.png"],
+      is_veg: true,
+      is_available: true,
+      is_bestseller: true,
+      is_featured: true,
+      is_customizable: true,
+      allow_cake_message: true,
+      allow_photo_upload: true,
+      allow_custom_message: true,
+      allow_custom_image: true,
+      flavours: [...BAKERY_FLAVOUR_PRESETS],
+      egg_options: [...BAKERY_EGG_OPTIONS],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      item_variants: [],
+      category: {
+        id: catId,
+        name: cakeCategory?.name ?? "Birthday Cakes",
+        is_active: true,
+        created_at: new Date().toISOString(),
+        sort_order: 1,
+      },
+    } as unknown as MenuItemWithRelations;
+  }, [menuItems, categoryMap, categories]);
 
   // Filtered products
   const filteredProducts = React.useMemo(() => {
