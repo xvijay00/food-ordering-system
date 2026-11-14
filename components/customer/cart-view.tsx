@@ -51,7 +51,7 @@ export function CartView() {
             Browse our menu and add dishes to your cart before checking out.
           </p>
         </div>
-        <Button asChild size="lg" className="min-h-11 rounded-xl px-6">
+        <Button asChild size="lg" className="min-h-12 rounded-full bg-gradient-to-r from-amber-500 to-primary px-8 font-black text-white shadow-md transition-all hover:scale-105">
           <Link href="/menu">Back to Menu</Link>
         </Button>
       </section>
@@ -81,8 +81,8 @@ export function CartView() {
       </div>
 
       {/* Cart Items */}
-      <Card className="rounded-2xl">
-        <CardHeader className="border-b border-border/60 pb-3">
+      <Card className="rounded-3xl border-border/80 shadow-xs overflow-hidden">
+        <CardHeader className="border-b border-border/60 bg-muted/30 px-5 py-4">
           <CardTitle className="text-lg font-bold">Items</CardTitle>
         </CardHeader>
         <CardContent className="divide-y divide-border/60 p-0">
@@ -214,8 +214,8 @@ export function CartView() {
       </Card>
 
       {/* Kitchen / Order Notes */}
-      <Card className="rounded-2xl">
-        <CardContent className="space-y-2 p-5">
+      <Card className="rounded-3xl border-border/80 shadow-xs">
+        <CardContent className="space-y-2 p-5 sm:p-6">
           <label htmlFor="cart-notes" className="block text-base font-bold text-foreground">
             Cooking &amp; Order Notes (optional)
           </label>
@@ -225,16 +225,16 @@ export function CartView() {
             onChange={(e) => setNotes(e.target.value)}
             maxLength={300}
             placeholder="Less spicy, eggless, extra candles..."
-            className="min-h-24 rounded-xl text-base font-medium"
+            className="min-h-24 rounded-2xl text-base font-medium"
           />
         </CardContent>
       </Card>
 
       {/* Subtotal & Checkout CTA */}
-      <Card className="rounded-2xl">
-        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="rounded-3xl border-border/80 shadow-md bg-gradient-to-br from-card via-card to-primary/5">
+        <CardContent className="flex flex-col gap-4 p-5 sm:p-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-bold tracking-wider text-foreground/75 uppercase">
+            <p className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Subtotal
             </p>
             <p className="text-2xl font-black tabular-nums text-foreground sm:text-3xl">
@@ -254,7 +254,7 @@ export function CartView() {
           <Button
             asChild
             size="lg"
-            className="min-h-13 gap-2 rounded-xl px-7 text-base font-black shadow-md"
+            className="min-h-13 gap-2 rounded-full bg-gradient-to-r from-amber-500 to-primary px-8 text-base font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
           >
             <Link href="/checkout">
               <span>Proceed to Checkout</span>

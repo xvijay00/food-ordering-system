@@ -359,7 +359,7 @@ export function OrderTracker({ token }: { token: string }) {
             variant="outline"
             size="sm"
             onClick={handleCopyLink}
-            className="min-h-10 gap-1.5 rounded-xl"
+            className="min-h-10 gap-1.5 rounded-full px-4 text-xs font-bold"
           >
             <Copy className="size-3.5" aria-hidden="true" />
             <span>Share</span>
@@ -371,7 +371,7 @@ export function OrderTracker({ token }: { token: string }) {
             aria-label="Refresh order status"
             disabled={refreshing}
             onClick={() => void fetchOrder(true)}
-            className="size-10 rounded-xl"
+            className="size-10 rounded-full"
           >
             <RefreshCw
               className={`size-4 ${refreshing ? "animate-spin" : ""}`}
@@ -383,7 +383,7 @@ export function OrderTracker({ token }: { token: string }) {
 
       {/* Vertical Animated Status Stepper or Cancelled State */}
       {isCancelled ? (
-        <Card className="rounded-2xl border-destructive/50 bg-destructive/10">
+        <Card className="rounded-3xl border-destructive/50 bg-destructive/10">
           <CardContent className="flex items-start gap-3.5 p-5">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
               <XCircle className="size-5" aria-hidden="true" />
@@ -401,8 +401,8 @@ export function OrderTracker({ token }: { token: string }) {
           </CardContent>
         </Card>
       ) : (
-        <Card className="rounded-2xl">
-          <CardHeader className="space-y-3 border-b border-border/60 pb-4">
+        <Card className="rounded-3xl border-border/80 shadow-xs overflow-hidden">
+          <CardHeader className="space-y-3 border-b border-border/60 bg-muted/20 px-5 py-4">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-base">Live Order Progress</CardTitle>
               <span className="text-xs font-medium text-muted-foreground">
@@ -503,7 +503,7 @@ export function OrderTracker({ token }: { token: string }) {
       )}
 
       {/* Items & Bill */}
-      <Card className="rounded-2xl">
+      <Card className="rounded-3xl border-border/80 shadow-xs overflow-hidden">
         <CardHeader className="border-b border-border/60 pb-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="text-base">Items & Bill</CardTitle>

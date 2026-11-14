@@ -34,6 +34,23 @@ type MenuBrowserProps = {
   fetchError?: string | null;
 };
 
+function getCategoryEmoji(name: string): string {
+  const l = name.toLowerCase();
+  if (l.includes("cake")) return "🎂";
+  if (l.includes("pizza")) return "🍕";
+  if (l.includes("pastr")) return "🍰";
+  if (l.includes("bread") || l.includes("bun")) return "🍞";
+  if (l.includes("balloon")) return "🎈";
+  if (l.includes("candle")) return "🕯️";
+  if (l.includes("banner")) return "🎊";
+  if (l.includes("cap") || l.includes("hat")) return "🎉";
+  if (l.includes("gift")) return "🎁";
+  if (l.includes("decor") || l.includes("party")) return "✨";
+  if (l.includes("drink") || l.includes("beverage")) return "🥤";
+  if (l.includes("snack") || l.includes("bite")) return "🍿";
+  return "🍽️";
+}
+
 export function MenuBrowser({
   categories,
   menuItems,
@@ -108,44 +125,83 @@ export function MenuBrowser({
   const subtotal = hydrated ? calculateCartSubtotal(items) : 0;
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6">
-      {/* Delivery Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card/70 px-4 py-3 sm:px-5">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-            <Bike className="size-5" aria-hidden="true" />
-          </span>
-          <div>
-            <p className="text-base font-bold text-foreground">Delivery</p>
-            <p className="text-sm font-medium text-foreground/80">
-              Packed fresh and delivered to your address
-            </p>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-5 sm:px-6">
+      {/* ============================================================ */}
+      {/* 1. HERO SHOWCASE CARD (Foodie / Delicious Food Delivered Fast) */}
+      {/* ============================================================ */}
+      <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-rose-500/15 p-6 shadow-sm sm:p-8">
+        <div className="relative z-10 max-w-2xl space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background/80 px-3 py-1 text-xs font-black uppercase tracking-wider text-primary backdrop-blur-xs">
+            <span className="size-2 rounded-full bg-primary animate-pulse" />
+            <span>Baker&apos;s Nation • Nahan, HP</span>
+          </div>
+
+          <h1 className="font-heading text-3xl font-black tracking-tight text-foreground sm:text-4xl md:text-5xl">
+            Good Food, <span className="bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">Good Mood</span> 🍰
+          </h1>
+
+          <p className="text-sm font-semibold leading-relaxed text-foreground/80 sm:text-base">
+            Fresh handcrafted cakes, artisan pizzas, indulgent pastries &amp; celebration packages packed fresh and delivered right to your doorstep.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Button
+              asChild
+              className="h-11 rounded-full bg-gradient-to-r from-amber-500 to-primary px-6 font-black text-white shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95"
+            >
+              <a href="#menu-categories">
+                <span>Explore Menu</span>
+                <ArrowRight className="ml-2 size-4" />
+              </a>
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 rounded-full border-primary/40 bg-background/70 px-6 font-extrabold text-foreground backdrop-blur-xs transition-all hover:border-primary hover:bg-background/95"
+            >
+              <Link href="/birthday">
+                <span>Custom Cake Studio 📸</span>
+              </Link>
+            </Button>
+          </div>
+
+          {/* Quick Value Props Strip */}
+          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs font-bold text-foreground/75">
+            <div className="flex items-center gap-1.5">
+              <span className="flex size-5 items-center justify-center rounded-full bg-amber-500/20 text-[11px]">⚡</span>
+              <span>Fast Local Delivery</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="flex size-5 items-center justify-center rounded-full bg-emerald-500/20 text-[11px]">🛡️</span>
+              <span>100% Fresh Bakes</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="flex size-5 items-center justify-center rounded-full bg-primary/20 text-[11px]">📞</span>
+              <span>Call 7831099101</span>
+            </div>
           </div>
         </div>
 
-        {itemCount > 0 && (
-          <Button asChild variant="outline" size="sm" className="min-h-10 gap-2 px-4 text-sm font-bold">
-            <Link href="/cart">
-              <ShoppingBag className="size-4" aria-hidden="true" />
-              <span>View Cart ({itemCount})</span>
-            </Link>
-          </Button>
-        )}
+        {/* Ambient Decorative Glow */}
+        <div className="pointer-events-none absolute -right-16 -top-16 size-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 right-24 size-48 rounded-full bg-amber-500/15 blur-2xl" />
       </div>
 
+      {/* Kitchen Closed Alert */}
       {!shopOpen && (
         <div
           role="status"
           className="flex items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-base font-semibold text-amber-950 dark:text-amber-100"
         >
-          <AlertCircle className="size-5 shrink-0" aria-hidden="true" />
+          <AlertCircle className="size-5 shrink-0 text-amber-600" aria-hidden="true" />
           <p>
-            The kitchen is currently closed for new orders. You can still browse
-            our menu.
+            The kitchen is currently closed for new orders. You can still browse our menu.
           </p>
         </div>
       )}
 
+      {/* Fetch Error Alert */}
       {fetchError && (
         <div
           role="alert"
@@ -156,19 +212,21 @@ export function MenuBrowser({
         </div>
       )}
 
-      {/* Birthday & Custom Cake Spotlight Banner */}
-      <div className="overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-amber-500/15 via-primary/10 to-rose-500/10 p-4 shadow-xs sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-2xl shadow-2xs">
+      {/* ============================================================ */}
+      {/* 2. CUSTOM PHOTO CAKE SPOTLIGHT BANNER */}
+      {/* ============================================================ */}
+      <div className="overflow-hidden rounded-3xl border-2 border-primary/30 bg-gradient-to-r from-amber-500/15 via-primary/10 to-rose-500/10 p-5 shadow-xs">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3.5">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-primary text-2xl text-white shadow-sm">
               🎂
             </span>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-heading text-base font-black text-foreground sm:text-lg">
-                  Custom Design & Photo Cake
+                <span className="font-heading text-lg font-black text-foreground sm:text-xl">
+                  Custom Design &amp; Photo Cake
                 </span>
-                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-black uppercase text-primary">
+                <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-black uppercase text-primary">
                   Photo Upload 📸
                 </span>
               </div>
@@ -179,47 +237,50 @@ export function MenuBrowser({
           </div>
           <Button
             asChild
-            className="h-10 shrink-0 rounded-xl bg-gradient-to-r from-amber-600 to-primary px-4 text-sm font-black text-white shadow-sm transition-transform hover:scale-[1.02]"
+            className="h-10 shrink-0 rounded-full bg-gradient-to-r from-amber-500 to-primary px-5 text-sm font-black text-white shadow-sm transition-all hover:scale-105"
           >
             <Link href="/birthday">
-              <span>Send Photo & Order</span>
+              <span>Send Photo &amp; Order</span>
               <ArrowRight className="ml-1.5 size-4" />
             </Link>
           </Button>
         </div>
       </div>
 
-      {/* Search + Veg / Non-Veg Toggle */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* ============================================================ */}
+      {/* 3. SEARCH & VEG / NON-VEG PILL FILTERS */}
+      {/* ============================================================ */}
+      <div id="menu-categories" className="flex flex-col gap-3 scroll-mt-24 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 sm:max-w-md">
           <Search
-            className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-foreground/60"
+            className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-foreground/60"
             aria-hidden="true"
           />
           <Input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search dishes by name..."
-            aria-label="Search dishes by name"
-            className="h-12 rounded-xl pr-10 pl-11 text-base font-semibold text-foreground placeholder:text-foreground/50"
+            placeholder="Search dishes or cakes..."
+            aria-label="Search dishes or cakes"
+            className="h-12 rounded-full border-border/80 bg-card pr-10 pl-11 text-base font-semibold text-foreground shadow-2xs placeholder:text-foreground/50 focus-visible:ring-primary"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
               aria-label="Clear search"
-              className="absolute top-1/2 right-2.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-foreground/70 hover:text-foreground"
+              className="absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-foreground/70 hover:bg-muted hover:text-foreground"
             >
               <X className="size-4" aria-hidden="true" />
             </button>
           )}
         </div>
 
+        {/* Veg / Non-Veg Rounded Pills */}
         <div
           role="group"
           aria-label="Dietary filter"
-          className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-border/80 bg-card p-1.5"
+          className="inline-flex w-fit items-center gap-1 rounded-full border border-border/80 bg-card p-1 shadow-2xs"
         >
           <Button
             type="button"
@@ -227,7 +288,7 @@ export function MenuBrowser({
             size="sm"
             aria-pressed={dietaryFilter === "all"}
             onClick={() => setDietaryFilter("all")}
-            className="min-h-10 rounded-lg px-4 text-sm font-bold"
+            className="min-h-9 rounded-full px-4 text-xs font-black"
           >
             All
           </Button>
@@ -239,7 +300,7 @@ export function MenuBrowser({
             onClick={() =>
               setDietaryFilter((prev) => (prev === "veg" ? "all" : "veg"))
             }
-            className="min-h-10 gap-2 rounded-lg px-4 text-sm font-bold"
+            className="min-h-9 gap-1.5 rounded-full px-4 text-xs font-black"
           >
             <VegIndicator isVeg />
             <span>Veg</span>
@@ -254,7 +315,7 @@ export function MenuBrowser({
                 prev === "non_veg" ? "all" : "non_veg"
               )
             }
-            className="min-h-10 gap-2 rounded-lg px-4 text-sm font-bold"
+            className="min-h-9 gap-1.5 rounded-full px-4 text-xs font-black"
           >
             <VegIndicator isVeg={false} />
             <span>Non-veg</span>
@@ -262,24 +323,33 @@ export function MenuBrowser({
         </div>
       </div>
 
-      {/* Sticky Horizontal Category Tabs */}
+      {/* ============================================================ */}
+      {/* 4. POPULAR CATEGORIES HORIZONTAL PILL CAROUSEL */}
+      {/* ============================================================ */}
       {visibleSections.length > 0 && (
-        <div className="sticky top-14 z-30 -mx-4 border-y border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6">
+        <div className="sticky top-16 z-30 -mx-4 border-y border-border/70 bg-background/95 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6">
           <nav
             aria-label="Menu categories"
-            className="flex gap-2.5 overflow-x-auto"
+            className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5"
           >
             {visibleSections.map(({ category }) => {
               const isActive = effectiveActiveCategoryId === category.id;
+              const emoji = getCategoryEmoji(category.name);
+
               return (
                 <a
                   key={category.id}
                   href={`#category-${category.id}`}
                   onClick={() => setActiveCategoryId(category.id)}
                   aria-current={isActive ? "true" : undefined}
-                  className="category-scrollspy-link inline-flex min-h-11 shrink-0 items-center rounded-full border border-border px-5 text-base font-bold text-foreground/80 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+                  className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold transition-all ${
+                    isActive
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm scale-102 font-black"
+                      : "border-border/80 bg-card text-foreground/80 hover:bg-muted hover:text-foreground"
+                  }`}
                 >
-                  {category.name}
+                  <span className="text-base" aria-hidden="true">{emoji}</span>
+                  <span>{category.name}</span>
                 </a>
               );
             })}
@@ -287,22 +357,27 @@ export function MenuBrowser({
         </div>
       )}
 
-      {/* Category Sections */}
+      {/* ============================================================ */}
+      {/* 5. PRODUCT SECTIONS & GRID */}
+      {/* ============================================================ */}
       {visibleSections.length === 0 ? (
-        <div className="rounded-2xl border border-dashed p-10 text-center">
-          <p className="text-lg font-bold text-foreground">
+        <div className="rounded-3xl border border-dashed border-border/80 bg-card/60 p-12 text-center shadow-xs">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-muted text-3xl">
+            🧁
+          </span>
+          <p className="mt-4 font-heading text-xl font-bold text-foreground">
             {menuItems.length === 0
               ? "Menu is being updated"
               : "No bakery items match your filter"}
           </p>
-          <p className="mt-2 text-base font-medium text-foreground/80">
+          <p className="mt-2 text-sm font-medium text-foreground/75">
             {menuItems.length === 0
               ? "Freshly baked cakes, pastries, pizzas, and breads are being added. Check back shortly!"
               : "Try clearing your search input or resetting the filter."}
           </p>
         </div>
       ) : (
-        <div className="space-y-10 pb-24">
+        <div className="space-y-12 pb-24">
           {visibleSections.map(({ category, items: sectionItems }) => (
             <section
               key={category.id}
@@ -310,17 +385,21 @@ export function MenuBrowser({
               tabIndex={-1}
               className="scroll-mt-32 space-y-4 focus:outline-none"
             >
-              <div className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-2">
-                <h2 className="font-heading text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-                  {category.name}
-                </h2>
-                <span className="text-sm font-bold text-foreground/70">
-                  {sectionItems.length}{" "}
-                  {sectionItems.length === 1 ? "item" : "items"}
+              <div className="flex items-baseline justify-between gap-2 border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl" aria-hidden="true">
+                    {getCategoryEmoji(category.name)}
+                  </span>
+                  <h2 className="font-heading text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+                    {category.name}
+                  </h2>
+                </div>
+                <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-foreground/70">
+                  {sectionItems.length} {sectionItems.length === 1 ? "item" : "items"}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {sectionItems.map((item) => (
                   <MenuCard
                     key={item.id}
@@ -335,23 +414,32 @@ export function MenuBrowser({
         </div>
       )}
 
-      {/* Floating View Cart Bar */}
+      {/* ============================================================ */}
+      {/* 6. FLOATING VIEW CART BAR (as seen in QuickBite / YummyCart) */}
+      {/* ============================================================ */}
       {hydrated && itemCount > 0 && (
-        <div className="fixed inset-x-0 bottom-[calc(4.6rem+env(safe-area-inset-bottom,0px))] z-30 mx-auto max-w-xl px-4 md:bottom-6">
+        <div className="fixed inset-x-0 bottom-[calc(4.8rem+env(safe-area-inset-bottom,0px))] z-30 mx-auto max-w-lg px-4 md:bottom-6">
           <Link
             href="/cart"
-            className="flex min-h-14 items-center justify-between gap-4 rounded-2xl bg-primary px-5 py-3.5 text-primary-foreground shadow-xl ring-1 ring-primary/20 transition-transform hover:scale-[1.01] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.99]"
+            className="flex min-h-14 items-center justify-between gap-4 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-primary px-5 py-3 text-white shadow-2xl ring-2 ring-white/20 transition-all hover:scale-102 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-98"
           >
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground/20">
+              <span className="flex size-9 items-center justify-center rounded-full bg-white/25 text-white">
                 <ShoppingBag className="size-5" aria-hidden="true" />
               </span>
-              <span className="text-base font-extrabold tracking-tight">
-                View Cart ({itemCount} {itemCount === 1 ? "item" : "items"},{" "}
-                {formatPrice(subtotal)})
-              </span>
+              <div>
+                <span className="block text-xs font-bold uppercase tracking-wider text-white/85">
+                  Your Cart ({itemCount} {itemCount === 1 ? "item" : "items"})
+                </span>
+                <span className="text-base font-black tracking-tight text-white">
+                  Total: {formatPrice(subtotal)}
+                </span>
+              </div>
             </div>
-            <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
+            <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-black uppercase text-white">
+              <span>Checkout</span>
+              <ArrowRight className="size-4 shrink-0" aria-hidden="true" />
+            </div>
           </Link>
         </div>
       )}

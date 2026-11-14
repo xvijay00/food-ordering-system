@@ -526,7 +526,7 @@ export function BirthdayCustomCakeDialog({
                 size="icon"
                 disabled={quantity <= 1}
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="size-9 rounded-lg"
+                className="size-9 rounded-full"
               >
                 <Minus className="size-4" />
               </Button>
@@ -539,7 +539,7 @@ export function BirthdayCustomCakeDialog({
                 size="icon"
                 disabled={quantity >= 10}
                 onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-                className="size-9 rounded-lg"
+                className="size-9 rounded-full"
               >
                 <Plus className="size-4" />
               </Button>
@@ -575,7 +575,7 @@ export function BirthdayCustomCakeDialog({
           <Button
             type="button"
             onClick={handleConfirm}
-            className="h-11 rounded-xl px-6 font-bold shadow-md"
+            className="h-11 rounded-full bg-gradient-to-r from-amber-500 to-primary px-7 font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
           >
             <PartyPopper className="mr-2 size-4.5" />
             {isCustomCake ? "Add Custom Cake (Price on Call)" : "Add Cake to Birthday Package"}

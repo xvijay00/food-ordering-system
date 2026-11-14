@@ -195,9 +195,9 @@ export function MyOrdersList() {
             <li key={entry.order_token}>
               <Link
                 href={`/order/${entry.order_token}`}
-                className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="block rounded-3xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
-                <Card className="rounded-2xl transition-shadow hover:shadow-md">
+                <Card className="rounded-3xl border-border/80 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
                   <CardContent className="flex items-center justify-between gap-4 p-4 sm:p-5">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">

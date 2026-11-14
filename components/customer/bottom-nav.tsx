@@ -18,9 +18,9 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Mobile customer navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/92 px-2 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-2xl backdrop-blur-xl md:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4 gap-1 px-2">
+      <ul className="mx-auto grid max-w-md grid-cols-4 gap-1">
         {CUSTOMER_NAV_ITEMS.map(({ href, label, icon: Icon, isCart }) => {
           const isActive = pathname === href;
           const badgeText = itemCount > 99 ? "99+" : itemCount;
@@ -35,17 +35,27 @@ export function BottomNav() {
                     ? `${label} (${itemCount} items)`
                     : label
                 }
-                className="relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-xs font-bold text-foreground/75 transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:bg-primary/10 aria-[current=page]:font-black aria-[current=page]:text-primary"
+                className={`relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 text-xs transition-all ${
+                  isActive
+                    ? "bg-primary text-primary-foreground font-black shadow-sm scale-102"
+                    : "text-foreground/75 font-bold hover:bg-muted/80 hover:text-foreground"
+                }`}
               >
                 <span className="relative inline-flex">
                   <Icon className="size-5" aria-hidden="true" />
                   {isCart && itemCount > 0 && (
-                    <Badge className="absolute -top-2 -right-3 flex h-4 min-w-4 items-center justify-center px-1 text-[11px] font-black leading-none">
+                    <span
+                      className={`absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-black leading-none ${
+                        isActive
+                          ? "bg-white text-primary"
+                          : "bg-primary text-primary-foreground"
+                      }`}
+                    >
                       {badgeText}
-                    </Badge>
+                    </span>
                   )}
                 </span>
-                <span>{label}</span>
+                <span className="leading-none">{label}</span>
               </Link>
             </li>
           );

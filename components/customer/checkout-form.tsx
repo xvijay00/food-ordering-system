@@ -334,7 +334,7 @@ export function CheckoutForm() {
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Form Column */}
         <div className="lg:col-span-7">
-          <Card className="rounded-2xl">
+          <Card className="rounded-3xl border-border/80 shadow-xs">
             <CardHeader className="border-b border-border/60 pb-3">
               <CardTitle id="checkout-form-title" className="text-lg font-bold">
                 Order & Contact Details
@@ -568,7 +568,7 @@ export function CheckoutForm() {
                   type="submit"
                   size="lg"
                   disabled={orderingDisabled}
-                  className="min-h-13 w-full rounded-xl text-base font-black shadow-md"
+                  className="min-h-13 w-full rounded-full bg-gradient-to-r from-amber-500 to-primary text-base font-black text-white shadow-md transition-all hover:scale-[1.02] active:scale-98"
                 >
                   {isSubmitting ? (
                     <>
@@ -593,7 +593,7 @@ export function CheckoutForm() {
 
         {/* Bill Summary Column */}
         <div className="lg:col-span-5">
-          <Card className="sticky top-20 rounded-2xl">
+          <Card className="sticky top-20 rounded-3xl border-border/80 shadow-xs">
             <CardHeader className="border-b border-border/60 pb-3">
               <CardTitle className="text-lg font-bold">Bill Summary</CardTitle>
             </CardHeader>

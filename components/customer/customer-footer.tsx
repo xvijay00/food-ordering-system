@@ -25,7 +25,7 @@ export function CustomerFooter() {
             <div className="flex items-center gap-2 pt-1">
               <a
                 href={`tel:${RESTAURANT_CONFIG.phone}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary transition-all hover:bg-primary hover:text-white"
               >
                 <Phone className="size-3.5" />
                 <span>Call {RESTAURANT_CONFIG.phone}</span>
@@ -34,7 +34,7 @@ export function CustomerFooter() {
                 href={`https://wa.me/91${RESTAURANT_CONFIG.phone}?text=Hi%20Baker's%20Nation,%20I%20would%20like%20to%20order`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-600 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-400"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-500 hover:text-white dark:text-emerald-400"
               >
                 <MessageCircle className="size-3.5" />
                 <span>WhatsApp</span>

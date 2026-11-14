@@ -124,21 +124,21 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
   };
 
   return (
-    <Card
-      className={`group flex flex-col justify-between overflow-hidden rounded-3xl p-0 transition-all hover:shadow-lg ${
+    <article
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border/80 bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${
         isOutOfStock ? "opacity-65 grayscale" : ""
       }`}
     >
       <div>
         {/* Large Product Photo Box */}
-        <div className="relative h-56 w-full overflow-hidden bg-muted/60 sm:h-64">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/60">
           {showImage && activeImageUrl ? (
             <Image
               src={activeImageUrl}
               alt={`${item.name} photo ${imageIndex + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, 540px"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-cover transition-transform duration-500 group-hover:scale-108"
               onError={() =>
                 setFailedImages((prev) => ({ ...prev, [imageIndex]: true }))
               }
@@ -146,22 +146,64 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
           ) : (
             <div
               aria-hidden="true"
-              className="flex size-full items-center justify-center text-muted-foreground/40"
+              className="flex size-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted text-muted-foreground/40"
             >
               <UtensilsCrossed className="size-14" />
             </div>
           )}
 
-          {hasDiscount && !isOutOfStock && (
-            <Badge
-              variant="secondary"
-              className="absolute top-3 right-3 gap-1 bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm"
-            >
-              <Tag className="size-3" aria-hidden="true" />
-              {discountPercent}% OFF
-            </Badge>
+          {/* Floating Badges */}
+          <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2 pointer-events-none">
+            {/* Veg / Non-Veg Glass Pill */}
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-background/85 px-2.5 py-1 backdrop-blur-md shadow-xs">
+              <VegIndicator isVeg={item.is_veg} />
+              <span className="text-[11px] font-black uppercase tracking-wider text-foreground">
+                {item.is_veg ? "Veg" : "Non-Veg"}
+              </span>
+            </div>
+
+            {/* Discount or Bestseller Tag */}
+            <div className="flex items-center gap-1.5">
+              {hasDiscount && !isOutOfStock && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 rounded-full border-0 bg-emerald-600 px-2.5 py-1 text-xs font-black text-white shadow-md"
+                >
+                  <Tag className="size-3" aria-hidden="true" />
+                  {discountPercent}% OFF
+                </Badge>
+              )}
+              {item.is_bestseller && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 rounded-full border-0 bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-1 text-xs font-black text-white shadow-md"
+                >
+                  <Sparkles className="size-3" aria-hidden="true" />
+                  Bestseller
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Out of Stock / Low Stock Pill Overlay */}
+          {isOutOfStock ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-xs">
+              <span className="rounded-full bg-destructive/90 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-destructive-foreground shadow-lg">
+                Sold Out
+              </span>
+            </div>
+          ) : (
+            stockQty !== null &&
+            stockQty <= 5 && (
+              <div className="absolute bottom-3 left-3 pointer-events-none">
+                <span className="rounded-full bg-rose-600/90 px-2.5 py-0.5 text-[11px] font-black text-white shadow-sm backdrop-blur-xs">
+                  Only {stockQty} left
+                </span>
+              </div>
+            )
           )}
 
+          {/* Multi-image Controls */}
           {images.length > 1 && (
             <>
               <button
@@ -173,7 +215,7 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
                     (prev) => (prev - 1 + images.length) % images.length
                   );
                 }}
-                className="absolute top-1/2 left-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/80"
+                className="absolute top-1/2 left-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white shadow-md backdrop-blur-xs transition-colors hover:bg-black/85"
               >
                 <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
@@ -184,16 +226,16 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
                   e.stopPropagation();
                   setImageIndex((prev) => (prev + 1) % images.length);
                 }}
-                className="absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/80"
+                className="absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white shadow-md backdrop-blur-xs transition-colors hover:bg-black/85"
               >
                 <ChevronRight className="size-4" aria-hidden="true" />
               </button>
-              <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1.5">
+              <div className="absolute right-0 bottom-2.5 left-0 flex justify-center gap-1.5 pointer-events-none">
                 {images.map((_, idx) => (
                   <span
                     key={idx}
-                    className={`size-2 rounded-full transition-all ${
-                      idx === imageIndex ? "w-5 bg-white" : "bg-white/55"
+                    className={`h-1.5 rounded-full transition-all ${
+                      idx === imageIndex ? "w-5 bg-white shadow-xs" : "w-1.5 bg-white/60"
                     }`}
                   />
                 ))}
@@ -203,105 +245,92 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
         </div>
 
         {/* Product Details */}
-        <div className="space-y-3 p-5 sm:p-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <VegIndicator isVeg={item.is_veg} />
-            {item.is_bestseller && (
-              <Badge
-                variant="secondary"
-                className="gap-1 bg-amber-500/15 text-xs font-bold text-amber-800 dark:text-amber-200"
-              >
-                <Sparkles className="size-3.5" aria-hidden="true" />
-                Bestseller
-              </Badge>
-            )}
-            {isOutOfStock ? (
-              <Badge variant="secondary" className="text-xs font-bold">
-                Sold out
-              </Badge>
-            ) : (
-              stockQty !== null &&
-              stockQty <= 5 && (
-                <Badge
-                  variant="secondary"
-                  className="bg-rose-500/10 text-xs font-bold text-rose-800 dark:text-rose-200"
-                >
-                  Only {stockQty} left
-                </Badge>
-              )
-            )}
-          </div>
-
-          <div>
-            <h3 className="font-heading text-2xl font-extrabold leading-snug tracking-tight text-foreground sm:text-3xl">
+        <div className="space-y-2.5 p-5">
+          <div className="space-y-1">
+            <h3 className="font-heading text-xl font-black leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-2xl">
               {item.name}
             </h3>
             {item.description && (
-              <p className="mt-2 line-clamp-2 text-base font-medium leading-relaxed text-foreground/85">
+              <p className="line-clamp-2 text-sm font-medium leading-relaxed text-muted-foreground">
                 {item.description}
               </p>
             )}
-            {(flavours.length > 0 || eggOptions.length > 0) && (
-              <p className="mt-2 line-clamp-1 text-sm font-semibold text-foreground/75">
-                {[
-                  flavours.length > 0 ? flavours.slice(0, 3).join(", ") : null,
-                  eggOptions.length > 0 ? eggOptions.join(" / ") : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            )}
           </div>
+
+          {(flavours.length > 0 || eggOptions.length > 0) && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs font-semibold text-foreground/70">
+              {flavours.length > 0 && (
+                <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-bold text-foreground/80">
+                  {flavours.slice(0, 2).join(", ")}
+                  {flavours.length > 2 ? ` +${flavours.length - 2}` : ""}
+                </span>
+              )}
+              {eggOptions.length > 0 && (
+                <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-bold text-foreground/80">
+                  {eggOptions.join(" / ")}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border/60 px-5 py-4 sm:px-6">
+      {/* Card Footer: Price & Add Button */}
+      <div className="flex items-center justify-between gap-3 border-t border-border/70 bg-card/50 p-4 sm:px-5">
         <div>
           {minVariantPrice !== null ? (
-            <p className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-              From {formatPrice(minVariantPrice)}
-            </p>
+            <div className="space-y-0.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                Starting from
+              </span>
+              <p className="text-xl font-black tracking-tight text-foreground sm:text-2xl">
+                {formatPrice(minVariantPrice)}
+              </p>
+            </div>
           ) : hasDiscount ? (
             <div className="flex flex-wrap items-baseline gap-2">
-              <p className="text-2xl font-black tracking-tight text-emerald-700 dark:text-emerald-400 sm:text-3xl">
+              <p className="text-xl font-black tracking-tight text-primary sm:text-2xl">
                 {formatPrice(sellingPrice)}
               </p>
-              <p className="text-base font-semibold text-muted-foreground line-through">
+              <p className="text-sm font-semibold text-muted-foreground line-through">
                 {formatPrice(originalPrice)}
               </p>
             </div>
           ) : (
-            <p className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+            <p className="text-xl font-black tracking-tight text-foreground sm:text-2xl">
               {formatPrice(originalPrice)}
             </p>
           )}
           {hasCustomization && (
-            <p className="text-xs font-bold text-primary">Customizable</p>
+            <p className="text-[11px] font-extrabold text-primary">
+              ✦ Customizable
+            </p>
           )}
         </div>
 
+        {/* Action Button matching the warm orange pill from the reference pictures */}
         {isOutOfStock ? (
           <Button
             type="button"
             variant="outline"
             disabled
-            className="min-h-12 rounded-xl px-6 text-base font-bold"
+            className="h-10 rounded-full px-5 text-xs font-black uppercase"
           >
             Sold out
           </Button>
         ) : simpleCartItem ? (
-          <div className="inline-flex items-center rounded-xl border border-primary/30 bg-primary/10 p-1">
+          <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 p-1 shadow-2xs">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               aria-label={`Decrease ${item.name} quantity`}
               onClick={() => decrement(simpleCartItem.id)}
-              className="size-10 text-primary hover:bg-primary/15"
+              className="size-8 rounded-full text-primary hover:bg-primary/20"
             >
-              <Minus className="size-4" aria-hidden="true" />
+              <Minus className="size-3.5" aria-hidden="true" />
             </Button>
-            <span className="min-w-9 text-center text-base font-black text-primary tabular-nums">
+            <span className="min-w-8 text-center text-sm font-black text-primary tabular-nums">
               {simpleCartItem.quantity}
             </span>
             <Button
@@ -311,27 +340,27 @@ export function MenuCard({ item, shopOpen, onCustomize }: MenuCardProps) {
               disabled={!shopOpen || atStockLimit}
               aria-label={`Increase ${item.name} quantity`}
               onClick={handleIncrementSimple}
-              className="size-10 text-primary hover:bg-primary/15"
+              className="size-8 rounded-full text-primary hover:bg-primary/20"
             >
-              <Plus className="size-4" aria-hidden="true" />
+              <Plus className="size-3.5" aria-hidden="true" />
             </Button>
           </div>
         ) : (
           <Button
             type="button"
-            variant={
-              hasCustomization && totalInCartForItem > 0 ? "default" : "outline"
-            }
             disabled={isDisabled}
             onClick={handleDirectAdd}
-            className="min-h-12 rounded-xl px-7 text-base font-bold shadow-sm"
+            className="group/btn h-10 rounded-full bg-gradient-to-r from-amber-500 to-primary px-5 text-sm font-black text-white shadow-sm transition-all hover:scale-105 hover:shadow-md active:scale-95"
           >
-            {hasCustomization && totalInCartForItem > 0
-              ? `Add (${totalInCartForItem})`
-              : "Add"}
+            <Plus className="mr-1 size-4 transition-transform group-hover/btn:rotate-90" aria-hidden="true" />
+            <span>
+              {hasCustomization && totalInCartForItem > 0
+                ? `Add (${totalInCartForItem})`
+                : "Add"}
+            </span>
           </Button>
         )}
       </div>
-    </Card>
+    </article>
   );
 }

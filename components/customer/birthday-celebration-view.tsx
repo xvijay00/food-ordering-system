@@ -433,7 +433,7 @@ export function BirthdayCelebrationView({
                   type="button"
                   size="lg"
                   onClick={() => setCustomizingCake(customCakeItem)}
-                  className="h-12 rounded-xl bg-gradient-to-r from-amber-600 via-primary to-rose-600 px-6 font-black text-white shadow-lg transition-transform hover:scale-[1.02]"
+                  className="h-12 rounded-full bg-gradient-to-r from-amber-500 via-primary to-rose-500 px-7 font-black text-white shadow-lg transition-all hover:scale-105 active:scale-95"
                 >
                   <Camera className="mr-2 size-4.5" />
                   Send Custom Cake Photo
@@ -444,7 +444,7 @@ export function BirthdayCelebrationView({
                 asChild
                 size="lg"
                 variant="outline"
-                className="h-12 rounded-xl px-5 font-bold shadow-xs hover:border-primary/50"
+                className="h-12 rounded-full border-border/80 bg-background/80 px-6 font-bold shadow-xs hover:border-primary/50"
               >
                 <a href="#birthday-products">
                   <Sparkles className="mr-2 size-4.5" />
@@ -464,7 +464,7 @@ export function BirthdayCelebrationView({
                     el?.scrollIntoView({ behavior: "smooth" });
                   }
                 }}
-                className="h-12 rounded-xl px-5 font-bold"
+                className="h-12 rounded-full border-border/80 bg-background/80 px-6 font-bold"
               >
                 <Package className="mr-2 size-4.5 text-primary" />
                 Build Package ({totalPackageItemsCount} items)
@@ -499,7 +499,7 @@ export function BirthdayCelebrationView({
       {/* ============================================================ */}
       <section
         id="birthday-products"
-        className="sticky top-14 z-30 border-b border-border/80 bg-background/95 py-3 backdrop-blur-md"
+        className="sticky top-16 z-30 border-b border-border/80 bg-background/95 py-3 backdrop-blur-xl"
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -705,7 +705,7 @@ export function BirthdayCelebrationView({
                   return (
                     <Card
                       key={product.id}
-                      className={`flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card transition-all duration-200 hover:border-primary/40 hover:shadow-md ${
+                      className={`flex flex-col overflow-hidden rounded-3xl border border-border/80 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${
                         isOutOfStock ? "opacity-75" : ""
                       }`}
                     >
@@ -822,7 +822,7 @@ export function BirthdayCelebrationView({
                                 disabled
                                 variant="outline"
                                 size="sm"
-                                className="h-9 rounded-xl font-bold"
+                                className="h-9 rounded-full font-bold"
                               >
                                 Sold Out
                               </Button>
@@ -833,8 +833,8 @@ export function BirthdayCelebrationView({
                                 onClick={() => setCustomizingCake(product)}
                                 className={
                                   isCustomCakeItem(product)
-                                    ? "h-9 rounded-xl bg-gradient-to-r from-amber-600 to-primary px-3 text-xs font-bold text-white shadow-xs"
-                                    : "h-9 rounded-xl px-3 text-xs font-bold shadow-xs"
+                                    ? "h-9 rounded-full bg-gradient-to-r from-amber-500 to-primary px-4 text-xs font-black text-white shadow-xs transition-all hover:scale-105"
+                                    : "h-9 rounded-full bg-gradient-to-r from-amber-500 to-primary px-4 text-xs font-black text-white shadow-xs transition-all hover:scale-105"
                                 }
                               >
                                 {isCustomCakeItem(product) ? (
@@ -851,7 +851,7 @@ export function BirthdayCelebrationView({
                               </Button>
                             ) : existingQty > 0 ? (
                               /* Stepper right on card */
-                              <div className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 p-1">
+                              <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 p-1">
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -859,7 +859,7 @@ export function BirthdayCelebrationView({
                                   onClick={() =>
                                     handleUpdateItemQty(`pkg-${product.id}`, -1)
                                   }
-                                  className="size-7 rounded-lg text-primary hover:bg-primary/20"
+                                  className="size-7 rounded-full text-primary hover:bg-primary/20"
                                 >
                                   <Minus className="size-3.5" />
                                 </Button>
@@ -873,7 +873,7 @@ export function BirthdayCelebrationView({
                                   onClick={() =>
                                     handleUpdateItemQty(`pkg-${product.id}`, 1)
                                   }
-                                  className="size-7 rounded-lg text-primary hover:bg-primary/20"
+                                  className="size-7 rounded-full text-primary hover:bg-primary/20"
                                 >
                                   <Plus className="size-3.5" />
                                 </Button>
@@ -881,10 +881,9 @@ export function BirthdayCelebrationView({
                             ) : (
                               <Button
                                 type="button"
-                                variant="outline"
                                 size="sm"
                                 onClick={() => handleAddStandardItem(product, 1)}
-                                className="h-9 rounded-xl px-3 text-xs font-bold hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                                className="h-9 rounded-full bg-gradient-to-r from-amber-500 to-primary px-4 text-xs font-black text-white shadow-xs transition-all hover:scale-105"
                               >
                                 <Plus className="mr-1 size-3.5" />
                                 Add to Package

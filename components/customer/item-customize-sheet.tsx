@@ -459,8 +459,8 @@ export function ItemCustomizeSheet({
           )}
         </div>
 
-        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-border/60 px-4 py-3 sm:px-6">
-          <div className="inline-flex items-center rounded-xl border border-border bg-background p-1">
+        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-border/70 px-4 py-3 sm:px-6">
+          <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 p-1">
             <Button
               type="button"
               variant="ghost"
@@ -468,11 +468,11 @@ export function ItemCustomizeSheet({
               aria-label="Decrease quantity"
               disabled={quantity <= 1}
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="size-10"
+              className="size-9 rounded-full text-primary hover:bg-primary/20"
             >
               <Minus className="size-4" aria-hidden="true" />
             </Button>
-            <span className="min-w-9 text-center text-base font-black tabular-nums">
+            <span className="min-w-8 text-center text-sm font-black text-primary tabular-nums">
               {quantity}
             </span>
             <Button
@@ -482,7 +482,7 @@ export function ItemCustomizeSheet({
               aria-label="Increase quantity"
               disabled={remainingStock !== null && quantity >= remainingStock}
               onClick={() => setQuantity((q) => q + 1)}
-              className="size-10"
+              className="size-9 rounded-full text-primary hover:bg-primary/20"
             >
               <Plus className="size-4" aria-hidden="true" />
             </Button>
@@ -492,7 +492,7 @@ export function ItemCustomizeSheet({
             type="button"
             disabled={disabled || outOfStock || uploadingCakePhoto}
             onClick={handleAddToCart}
-            className="min-h-12 flex-1 text-base font-black shadow-sm"
+            className="min-h-12 flex-1 rounded-full bg-gradient-to-r from-amber-500 to-primary text-base font-black text-white shadow-md transition-all hover:scale-[1.02] active:scale-98"
           >
             {outOfStock
               ? "Out of Stock"
