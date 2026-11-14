@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bike, Phone } from "lucide-react";
+import { Bike, Lock, Phone } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
 import { CUSTOMER_NAV_ITEMS } from "@/components/customer/nav-items";
@@ -76,6 +76,14 @@ export function CustomerHeader() {
             Delivery
           </Badge>
           <ThemeToggle />
+          <Link
+            href="/admin/login"
+            aria-label="Admin login"
+            title="Admin"
+            className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <Lock className="size-3.5" aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </header>
